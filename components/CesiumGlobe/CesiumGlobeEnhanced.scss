@@ -1,0 +1,280 @@
+/**
+ * Styles for Enhanced CesiumGlobe with Visual Settings
+ */
+
+// Visual Settings Debug Button
+.visual-settings-debug-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  z-index: 1000;
+  
+  &:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+  }
+  
+  &:active {
+    transform: translateY(0) scale(0.98);
+  }
+}
+
+// Performance Overlay
+.performance-overlay {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  border-radius: 6px;
+  z-index: 1000;
+  pointer-events: none;
+  
+  .fps-indicator {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: bold;
+    
+    &.fps-good {
+      color: #4ade80;
+    }
+    
+    &.fps-ok {
+      color: #fbbf24;
+    }
+    
+    &.fps-poor {
+      color: #ef4444;
+    }
+  }
+}
+
+// Cesium Performance Overlay
+.cesium-performance-overlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  gap: 16px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  z-index: 100;
+  pointer-events: none;
+  animation: slideInFromTop 0.3s ease-out;
+
+  .fps-display,
+  .memory-display {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    
+    .fps-value,
+    .memory-value {
+      font-size: 20px;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+    }
+    
+    .fps-label,
+    .memory-label {
+      font-size: 12px;
+      opacity: 0.7;
+      text-transform: uppercase;
+    }
+  }
+  
+  .fps-display {
+    &.fps-excellent .fps-value {
+      color: #4ade80;
+      text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+    }
+    
+    &.fps-good .fps-value {
+      color: #a3e635;
+    }
+    
+    &.fps-ok .fps-value {
+      color: #fbbf24;
+    }
+    
+    &.fps-poor .fps-value {
+      color: #ef4444;
+      animation: pulse 1s infinite;
+    }
+  }
+  
+  .memory-display {
+    .memory-value {
+      color: #60a5fa;
+    }
+  }
+}
+
+// Status Bar
+.cesium-status-bar {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  border-radius: 20px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  z-index: 100;
+  pointer-events: none;
+  
+  span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    
+    strong {
+      color: #fff;
+      font-weight: 600;
+    }
+  }
+  
+  .loading-indicator {
+    color: #fbbf24;
+    animation: blink 1s infinite;
+  }
+}
+
+// Visual Settings Trigger Button
+.cesium-visual-settings-trigger {
+  position: absolute;
+  top: 80px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 100;
+  
+  .icon {
+    font-size: 18px;
+  }
+  
+  .label {
+    @media (max-width: 768px) {
+      display: none;
+    }
+  }
+  
+  &:hover {
+    transform: translateX(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+  
+  &:active {
+    transform: translateX(0);
+  }
+}
+
+// Shortcuts Help
+.cesium-shortcuts-help {
+  position: absolute;
+  top: 140px;
+  right: 10px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+  z-index: 100;
+  animation: slideInFromRight 0.3s ease-out;
+  
+  h4 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  
+  dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px 16px;
+    
+    dt {
+      font-weight: 600;
+      color: #667eea;
+      font-family: 'Courier New', monospace;
+    }
+    
+    dd {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.7);
+    }
+  }
+}
+
+// Animations
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
