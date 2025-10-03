@@ -1,17 +1,25 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <div className="container mx-auto px-4 py-16">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
+      {/* Header with theme toggle */}
+      <div className="container mx-auto px-4 pt-4">
+        <div className="flex justify-end">
+          <ThemeToggle />
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-12">
         {/* Hero Section */}
         <div className="text-center mb-16">
           <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Interactive Map Configurator
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
             Create beautiful, interactive maps with custom zones and content. Perfect for floor plans, blueprints, campus maps, and more.
           </p>
           <div className="flex gap-4 justify-center">
@@ -83,7 +91,7 @@ export default function Home() {
               </div>
               <div>
                 <h3 className="font-semibold text-lg mb-1">Define Your Canvas</h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   Choose your working area by searching for a location or entering coordinates manually
                 </p>
               </div>
@@ -94,7 +102,7 @@ export default function Home() {
               </div>
               <div>
                 <h3 className="font-semibold text-lg mb-1">Upload Your Image</h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   Upload a blueprint, floor plan, or any image (or skip to use base map imagery)
                 </p>
               </div>
@@ -105,7 +113,7 @@ export default function Home() {
               </div>
               <div>
                 <h3 className="font-semibold text-lg mb-1">Add Interactive Zones</h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   Click on the canvas or enter coordinates to add points, rectangles, or circles with custom content
                 </p>
               </div>
@@ -116,7 +124,7 @@ export default function Home() {
               </div>
               <div>
                 <h3 className="font-semibold text-lg mb-1">Publish & Share</h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   Save your map and share the unique URL with anyone. Your map is ready to use!
                 </p>
               </div>

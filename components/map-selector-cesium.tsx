@@ -170,13 +170,19 @@ export default function MapSelectorCesium({ onBoundsSelected }: MapSelectorProps
     return new Promise((resolve) => {
       console.log('[Cesium] Capturing map image for bounds:', bounds);
 
-      // Hide the rectangle overlay temporarily
-      const wasVisible = rectangleEntity?.isShowing;
+      // Store rectangle info for restoration
+      let rectangleCoords = null;
       if (rectangleEntity) {
-        rectangleEntity.show = false;
+        rectangleCoords = rectangleEntity.rectangle?.coordinates?.getValue(Cesium.JulianDate.now());
+        viewer.entities.remove(rectangleEntity);
+        setRectangleEntity(null);
+        console.log('[Cesium] Rectangle removed before capture');
       }
 
-      // Fly to the bounds first
+      // Remove ALL entities to ensure clean capture
+      viewer.entities.removeAll();
+
+      // Fly to the bounds
       viewer.camera.flyTo({
         destination: Cesium.Rectangle.fromDegrees(
           bounds.minLng,
@@ -194,36 +200,53 @@ export default function MapSelectorCesium({ onBoundsSelected }: MapSelectorProps
             console.log('[Cesium] Tiles loaded:', tilesLoaded);
 
             if (tilesLoaded) {
-              // Tiles are loaded, wait a bit more for rendering
+              // Wait for final render, then capture
               setTimeout(() => {
                 try {
-                  // Get the Cesium canvas
                   const canvas = viewer.scene.canvas;
                   const dataUrl = canvas.toDataURL('image/png');
 
-                  console.log('[Cesium] Map image captured, size:', dataUrl.length, 'bytes');
+                  console.log('[Cesium] Map image captured (clean), size:', dataUrl.length, 'bytes');
 
-                  // Restore rectangle visibility
-                  if (rectangleEntity && wasVisible) {
-                    rectangleEntity.show = true;
+                  // Restore the rectangle
+                  if (rectangleCoords) {
+                    const newEntity = viewer.entities.add({
+                      rectangle: {
+                        coordinates: rectangleCoords,
+                        material: Cesium.Color.BLUE.withAlpha(0.3),
+                        outline: true,
+                        outlineColor: Cesium.Color.BLUE,
+                        outlineWidth: 2,
+                      },
+                    });
+                    setRectangleEntity(newEntity);
+                    console.log('[Cesium] Rectangle restored after capture');
                   }
 
                   resolve(dataUrl);
                 } catch (error) {
                   console.error('[Cesium] Error capturing canvas:', error);
-                  if (rectangleEntity && wasVisible) {
-                    rectangleEntity.show = true;
+                  // Restore rectangle even on error
+                  if (rectangleCoords) {
+                    const newEntity = viewer.entities.add({
+                      rectangle: {
+                        coordinates: rectangleCoords,
+                        material: Cesium.Color.BLUE.withAlpha(0.3),
+                        outline: true,
+                        outlineColor: Cesium.Color.BLUE,
+                        outlineWidth: 2,
+                      },
+                    });
+                    setRectangleEntity(newEntity);
                   }
                   resolve('');
                 }
               }, 500);
             } else {
-              // Check again in 100ms
               setTimeout(checkTilesLoaded, 100);
             }
           };
 
-          // Start checking for tiles
           setTimeout(checkTilesLoaded, 500);
         }
       });

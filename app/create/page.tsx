@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { ArrowLeft, X } from 'lucide-react';
 
 type Step = 'info' | 'canvas' | 'blueprint' | 'zones';
 
@@ -92,6 +94,11 @@ export default function CreateMapPage() {
 
   const handleSaveMap = async (zones: any[]) => {
     try {
+      // Use blueprint if uploaded, otherwise use captured map image
+      const imageToSave = blueprintUrl || mapImageUrl;
+
+      console.log('[Create] Saving map with imageUrl:', imageToSave?.substring(0, 100));
+
       const response = await fetch('/api/maps', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -100,7 +107,7 @@ export default function CreateMapPage() {
           description: mapDescription,
           geographicBounds: geoBounds,
           canvasConfig,
-          imageUrl: blueprintUrl,
+          imageUrl: imageToSave,
           useBaseMap,
           zones,
         }),
@@ -139,18 +146,48 @@ export default function CreateMapPage() {
         ))}
       </div>
       <div className="flex justify-center space-x-20 mt-2">
-        <span className="text-sm text-gray-600">Info</span>
-        <span className="text-sm text-gray-600">Canvas</span>
-        <span className="text-sm text-gray-600">Blueprint</span>
-        <span className="text-sm text-gray-600">Zones</span>
+        <span className="text-sm text-gray-600 dark:text-gray-300">Info</span>
+        <span className="text-sm text-gray-600 dark:text-gray-300">Canvas</span>
+        <span className="text-sm text-gray-600 dark:text-gray-300">Blueprint</span>
+        <span className="text-sm text-gray-600 dark:text-gray-300">Zones</span>
       </div>
     </div>
   );
 
+  const handleBack = () => {
+    const steps: Step[] = ['info', 'canvas', 'blueprint', 'zones'];
+    const currentIndex = steps.indexOf(currentStep);
+    if (currentIndex > 0) {
+      setCurrentStep(steps[currentIndex - 1]);
+    } else {
+      router.push('/');
+    }
+  };
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-7xl">
+      <div className="flex justify-between items-center mb-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleBack}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {currentStep === 'info' ? 'Back to Home' : 'Back'}
+        </Button>
+        <ThemeToggle />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push('/')}
+        >
+          <X className="mr-2 h-4 w-4" />
+          Cancel
+        </Button>
+      </div>
+
       <h1 className="text-4xl font-bold mb-2 text-center">Create Interactive Map</h1>
-      <p className="text-gray-600 mb-8 text-center">
+      <p className="text-gray-600 dark:text-gray-300 mb-8 text-center">
         Build your own interactive map with custom zones and content
       </p>
 

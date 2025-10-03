@@ -1,11 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Stage, Layer, Image as KonvaImage, Circle, Rect } from 'react-konva';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PointCoordinates, RectangleCoordinates, CircleCoordinates, ZoneContent } from '@/lib/types';
 import useImage from 'use-image';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, X } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 interface Zone {
   id: string;
@@ -25,13 +28,22 @@ interface MapData {
 
 export default function MapViewerPage() {
   const params = useParams();
+  const router = useRouter();
   const [map, setMap] = useState<MapData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedZone, setSelectedZone] = useState<{ content: ZoneContent } | null>(null);
   const [hoveredZoneId, setHoveredZoneId] = useState<string | null>(null);
 
   const canvasConfig = map ? JSON.parse(map.canvasConfig) : { width: 800, height: 600 };
-  const [image] = useImage(map?.imageUrl || '');
+  const [image, status] = useImage(map?.imageUrl || '');
+
+  useEffect(() => {
+    if (map?.imageUrl) {
+      console.log('[MapViewer] Loading image from:', map.imageUrl.substring(0, 100));
+      console.log('[MapViewer] Image status:', status);
+      console.log('[MapViewer] Image loaded:', !!image);
+    }
+  }, [map?.imageUrl, status, image]);
 
   useEffect(() => {
     fetchMap();
@@ -41,6 +53,9 @@ export default function MapViewerPage() {
     try {
       const response = await fetch(`/api/maps/${params.id}`);
       const data = await response.json();
+      console.log('[MapViewer] Loaded map:', data.title);
+      console.log('[MapViewer] ImageURL:', data.imageUrl?.substring(0, 100));
+      console.log('[MapViewer] ImageURL length:', data.imageUrl?.length);
       setMap(data);
     } catch (error) {
       console.error('Error fetching map:', error);
@@ -112,6 +127,29 @@ export default function MapViewerPage() {
     <div className="min-h-screen bg-black">
       {/* Header Overlay */}
       <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 to-transparent p-8">
+        <div className="flex items-start justify-between mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push('/maps')}
+            className="text-white hover:text-white hover:bg-white/10"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Maps
+          </Button>
+          <div className="flex gap-2">
+            <ThemeToggle />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push('/')}
+              className="text-white hover:text-white hover:bg-white/10"
+            >
+              <X className="mr-2 h-4 w-4" />
+              Close
+            </Button>
+          </div>
+        </div>
         <h1 className="text-5xl font-bold text-white mb-2">{map.title}</h1>
         {map.description && <p className="text-xl text-gray-300">{map.description}</p>}
       </div>

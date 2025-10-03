@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 interface MapData {
   id: string;
@@ -72,10 +74,22 @@ export default function MapsPage() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-7xl">
+      <div className="flex justify-between items-center mb-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push('/')}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Home
+        </Button>
+        <ThemeToggle />
+      </div>
+
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-4xl font-bold mb-2">My Maps</h1>
-          <p className="text-gray-600">Manage and deploy your interactive maps</p>
+          <p className="text-gray-600 dark:text-gray-300">Manage and deploy your interactive maps</p>
         </div>
         <Link href="/create">
           <Button size="lg">Create New Map</Button>
@@ -85,7 +99,7 @@ export default function MapsPage() {
       {maps.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-gray-600 mb-4">You haven't created any maps yet</p>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">You haven't created any maps yet</p>
             <Link href="/create">
               <Button>Create Your First Map</Button>
             </Link>
