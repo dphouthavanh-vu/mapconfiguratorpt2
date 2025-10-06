@@ -24,9 +24,11 @@ interface GlobeViewerProps {
   canvasConfig: CanvasConfig;
   geoBounds: GeographicBounds | null;
   mapTitle: string;
+  onBackToMaps?: () => void;
+  onView2D?: () => void;
 }
 
-export default function GlobeViewer({ zones, canvasConfig, geoBounds, mapTitle }: GlobeViewerProps) {
+export default function GlobeViewer({ zones, canvasConfig, geoBounds, mapTitle, onBackToMaps, onView2D }: GlobeViewerProps) {
   // Convert zones to landmarks for the globe
   const landmarks = useMemo(() => {
     if (!geoBounds || zones.length === 0) {
@@ -72,7 +74,13 @@ export default function GlobeViewer({ zones, canvasConfig, geoBounds, mapTitle }
 
   return (
     <div className="h-screen w-full bg-black">
-      <CesiumGlobe landmarks={landmarks} title={mapTitle} geoBounds={geoBounds} />
+      <CesiumGlobe
+        landmarks={landmarks}
+        title={mapTitle}
+        geoBounds={geoBounds}
+        onBackToMaps={onBackToMaps}
+        onView2D={onView2D}
+      />
     </div>
   );
 }

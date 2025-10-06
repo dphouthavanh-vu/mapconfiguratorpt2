@@ -1,6 +1,8 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import * as Cesium from 'cesium';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Map, RotateCcw } from 'lucide-react';
 import { Landmark } from './data/types';
 import { handlePinClick, handleClusterZoom } from './utils/cesiumUtils';
 import { calculateClusteringParameters } from './utils/scalingUtils';
@@ -33,9 +35,11 @@ interface CesiumGlobeProps {
     minLng: number;
     maxLng: number;
   } | null;
+  onBackToMaps?: () => void;
+  onView2D?: () => void;
 }
 
-const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: CesiumGlobeProps) => {
+const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds, onBackToMaps, onView2D }: CesiumGlobeProps) => {
   console.log('[CesiumGlobe] Received landmarks:', landmarksProp);
   console.log('[CesiumGlobe] Title:', title);
   console.log('[CesiumGlobe] Geographic bounds:', geoBounds);
@@ -1793,7 +1797,7 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
         }}
         className="cesium-globe-container"
       />
-      {showOverlay && !showLoadingIndicator && (
+      {showOverlay && !showLoadingIndicator && globeOpacity === 1 && (
         <div
           style={{
             position: 'fixed',
@@ -1822,9 +1826,7 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
             aria-label="Enter Globe"
             role="button"
             style={{
-              minWidth: Math.max(180, logoSizePx),
-              height: Math.max(48, Math.round(logoSizePx / 2)),
-              padding: '12px 20px',
+              padding: '16px 32px',
               cursor: entitiesReady ? 'pointer' : 'default',
               pointerEvents: 'auto',
               opacity: logoOpacity,
@@ -1833,15 +1835,15 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'linear-gradient(135deg, rgba(56,189,248,0.18), rgba(96,165,250,0.08))',
-              color: '#ffffff',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 12,
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              color: 'rgba(255, 255, 255, 0.8)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: '9999px',
               fontSize: 18,
               letterSpacing: 0.4,
-              fontWeight: 700,
-              boxShadow: '0 8px 24px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02)',
-              backdropFilter: 'blur(6px)'
+              fontWeight: 600,
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+              backdropFilter: 'blur(20px)'
             }}
           >
             Enter Globe
@@ -1857,48 +1859,21 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
               to {
                 opacity: 1;
               }
-            }  
+            }
 
             /* Hover/focus states for the overlay button */
             .cesium-overlay-button:hover {
-              transform: translateZ(0) scale(1.03) !important;
-              box-shadow: 0 12px 40px rgba(2,6,23,0.7) !important;
+              transform: translateZ(0) scale(1.05) !important;
+              background-color: rgba(255, 255, 255, 0.1) !important;
+              color: #fff !important;
             }
             .cesium-overlay-button:focus {
-              outline: 2px solid rgba(96,165,250,0.6);
+              outline: 2px solid rgba(255, 255, 255, 0.3);
               outline-offset: 4px;
             }
           `}</style>
         </div>
       )}
-      {showReset && (
-        <button
-          style={{
-            position: 'fixed',
-            bottom: 32,
-            right: '50%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 20,
-            padding: `${getScaledPadding(12)}px ${getScaledPadding(24)}px`,
-            color: '#fff',
-            fontWeight: 600,
-            fontSize: getScaledFontSize(20),
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
-            borderRadius: getScaledBorderRadius(40),
-            border: '1px solid #22313F',
-            background: 'rgba(96, 209, 223, 0.51)',
-            backdropFilter: 'blur(2px)',
-            width: getUIScaledDimensions(238, 46).width,
-            height: getUIScaledDimensions(238, 46).height,
-          }}
-          onClick={handleReset}
-        >
-          Reset
-        </button>
-      )}
-
       {/* Loading Indicator */}
       {showLoadingIndicator && (
         <div
@@ -1953,6 +1928,126 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
         />
       )}
 
+      {/* Globe Navigation Bar - Show when modal is closed */}
+      {!modalOpen && (
+        <div style={{
+          position: 'fixed',
+          bottom: '32px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 20,
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            backdropFilter: 'blur(20px)',
+            padding: '8px',
+            borderRadius: '9999px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+          }}>
+            {onBackToMaps && (
+              <motion.button
+                onClick={onBackToMaps}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '12px 24px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  borderRadius: '9999px',
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.color = '#fff';
+                }}
+                onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
+                }}
+              >
+                <ArrowLeft size={18} strokeWidth={2.5} />
+                <span style={{ display: 'none' }} className="md:inline">Back to Maps</span>
+              </motion.button>
+            )}
+
+            {onView2D && (
+              <motion.button
+                onClick={onView2D}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '12px 24px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  borderRadius: '9999px',
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.color = '#fff';
+                }}
+                onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
+                }}
+              >
+                <Map size={18} strokeWidth={2.5} />
+                <span style={{ display: 'none' }} className="md:inline">View in 2D</span>
+              </motion.button>
+            )}
+
+            <motion.button
+              onClick={handleReset}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 24px',
+                backgroundColor: 'transparent',
+                border: 'none',
+                borderRadius: '9999px',
+                color: 'rgba(255, 255, 255, 0.8)',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.color = '#fff';
+              }}
+              onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
+              }}
+            >
+              <RotateCcw size={18} strokeWidth={2.5} />
+              <span style={{ display: 'none' }} className="md:inline">Reset Tour</span>
+            </motion.button>
+          </div>
+        </div>
+      )}
+
       <FullscreenModal
         open={modalOpen && activeLandmarkIdx !== null}
         contentUrl={activeLandmarkIdx !== null ? LANDMARKS[activeLandmarkIdx].contentUrl || '' : ''}
@@ -1968,7 +2063,6 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
           setActiveLandmarkIdx(null);
           handleZoomBackOut();
         }}
-        onReset={() => { setModalOpen(false); setActiveLandmarkIdx(null); handleReset(); }}
       />
     </div>
   );

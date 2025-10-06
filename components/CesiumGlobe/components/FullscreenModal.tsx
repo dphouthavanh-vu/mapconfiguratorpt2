@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { X } from 'lucide-react';
 import styles from './FullscreenModal.module.scss';
 
 
@@ -13,7 +15,6 @@ interface FullscreenModalProps {
   links?: Array<{url: string; label?: string}>;
   videos?: string[];
   onClose: () => void;
-  onReset: () => void;
 }
 
 const FullscreenModal: React.FC<FullscreenModalProps> = ({
@@ -26,8 +27,7 @@ const FullscreenModal: React.FC<FullscreenModalProps> = ({
   images,
   links,
   videos,
-  onClose,
-  onReset
+  onClose
 }) => {
   const [iframeLoading, setIframeLoading] = useState(true);
   const [iframeError, setIframeError] = useState(false);
@@ -78,219 +78,303 @@ const FullscreenModal: React.FC<FullscreenModalProps> = ({
 
   if (!open) return null;
   
+  // Helper function to convert YouTube URLs to embed format
+  const convertToEmbedUrl = (url: string): string => {
+    let embedUrl = url.trim();
+
+    // Handle youtu.be short links
+    if (embedUrl.includes('youtu.be/')) {
+      const videoId = embedUrl.split('youtu.be/')[1].split('?')[0].split('&')[0];
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+
+    // Handle youtube.com/watch?v= links
+    if (embedUrl.includes('youtube.com/watch?v=')) {
+      const videoId = embedUrl.split('v=')[1].split('&')[0];
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+
+    // Handle youtube.com/shorts/
+    if (embedUrl.includes('youtube.com/shorts/')) {
+      const videoId = embedUrl.split('shorts/')[1].split('?')[0].split('&')[0];
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+
+    // Handle Vimeo links
+    if (embedUrl.includes('vimeo.com/') && !embedUrl.includes('player.vimeo.com')) {
+      const videoId = embedUrl.split('vimeo.com/')[1].split('?')[0].split('&')[0];
+      return `https://player.vimeo.com/video/${videoId}`;
+    }
+
+    return embedUrl;
+  };
+
+  // Determine if there's video content
+  const hasVideos = videos && videos.length > 0;
+  const hasImages = images && images.length > 0;
+  const hasLinks = links && links.length > 0;
+  const hasDescription = description && description.length > 0;
+
+  // Debug logging for videos
+  if (hasVideos) {
+    console.log('📹 Videos received:', videos);
+    console.log('📹 First video URL:', videos[0]);
+    console.log('📹 Converted embed URL:', convertToEmbedUrl(videos[0]));
+  }
+
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.videoArea}>
-        {/* Hero Section with Zone Title */}
+        {/* Zone Title - Centered at Top */}
         {landmarkName && (
           <div style={{
-            padding: '32px 40px',
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)',
+            padding: '40px 64px',
+            textAlign: 'center',
             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           }}>
-            <h2 style={{
+            <h1 style={{
               margin: 0,
-              fontSize: '32px',
-              fontWeight: '700',
+              fontSize: '48px',
+              fontWeight: '800',
               color: '#fff',
-              letterSpacing: '-0.5px',
-            }}>{landmarkName}</h2>
+              letterSpacing: '-1px',
+            }}>{landmarkName}</h1>
             {landmarkSubtitle && (
               <p style={{
-                margin: '8px 0 0 0',
-                fontSize: '16px',
+                margin: '12px 0 0 0',
+                fontSize: '18px',
+                fontWeight: '400',
                 color: 'rgba(255, 255, 255, 0.7)',
               }}>{landmarkSubtitle}</p>
             )}
           </div>
         )}
 
-        {/* Content Container with Scroll */}
+        {/* Main Content Area - Grid Layout for Large Screens */}
         <div style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '32px 40px',
+          padding: '64px',
+          display: 'grid',
+          gridTemplateColumns: hasVideos ? '1.5fr 1fr' : '1fr',
+          gap: '48px',
+          alignItems: 'start',
         }}>
-          {/* Description Section */}
-          {description && (
-            <div style={{ marginBottom: '32px' }}>
-              <h3 style={{
-                margin: '0 0 12px 0',
-                fontSize: '18px',
-                fontWeight: '600',
-                color: '#fff',
-              }}>Description</h3>
-              <p style={{
-                margin: 0,
-                fontSize: '15px',
-                lineHeight: '1.7',
-                color: 'rgba(255, 255, 255, 0.85)',
-              }}>{description}</p>
-            </div>
-          )}
 
-          {/* Images Gallery */}
-          {images && images.length > 0 && (
-            <div style={{ marginBottom: '32px' }}>
-              <h3 style={{
-                margin: '0 0 16px 0',
-                fontSize: '18px',
-                fontWeight: '600',
-                color: '#fff',
-              }}>Images</h3>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: images.length === 1 ? '1fr' : 'repeat(auto-fill, minmax(250px, 1fr))',
-                gap: '16px',
-              }}>
-                {images.map((image, index) => (
-                  <div key={index} style={{
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    aspectRatio: '16/9',
-                  }}>
-                    <img
-                      src={image}
-                      alt={`${landmarkName} - Image ${index + 1}`}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Videos Section */}
-          {videos && videos.length > 0 && (
-            <div style={{ marginBottom: '32px' }}>
-              <h3
-                style={{
-                  margin: '0 0 16px 0',
-                  fontSize: '18px',
-                  fontWeight: '600',
+          {/* Left Column - Primary Content */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
+            {/* Featured Video Section */}
+            {hasVideos && (
+              <div>
+                <h2 style={{
+                  margin: '0 0 24px 0',
+                  fontSize: '32px',
+                  fontWeight: '700',
                   color: '#fff',
-                }}
-              >
-                Videos
-              </h3>
+                  letterSpacing: '-0.5px',
+                }}>Featured Video</h2>
+                <div style={{
+                  borderRadius: '20px',
+                  overflow: 'hidden',
+                  backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                  aspectRatio: '16/9',
+                }}>
+                  <iframe
+                    src={convertToEmbedUrl(videos[0])}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                    }}
+                    title="Featured Video"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            )}
 
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '16px',
-                }}
-              >
-                {videos.map((videoUrl, index) => {
-                  let embedUrl = videoUrl.trim();
-
-                  // Convert YouTube watch links
-                  if (embedUrl.includes('youtube.com/watch?v=')) {
-                    embedUrl = embedUrl.replace('watch?v=', 'embed/');
-                  }
-
-                  // Convert YouTube Shorts
-                  if (embedUrl.includes('youtube.com/shorts/')) {
-                    embedUrl = embedUrl.replace('youtube.com/shorts/', 'www.youtube.com/embed/');
-                  }
-
-                  // Convert Vimeo links
-                  if (embedUrl.includes('vimeo.com/') && !embedUrl.includes('player.vimeo.com')) {
-                    const id = embedUrl.split('vimeo.com/')[1];
-                    embedUrl = `https://player.vimeo.com/video/${id}`;
-                  }
-
-                  return (
+            {/* Additional Videos */}
+            {hasVideos && videos.length > 1 && (
+              <div>
+                <h2 style={{
+                  margin: '0 0 24px 0',
+                  fontSize: '28px',
+                  fontWeight: '700',
+                  color: '#fff',
+                  letterSpacing: '-0.5px',
+                }}>More Videos</h2>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                  gap: '24px',
+                }}>
+                  {videos.slice(1).map((videoUrl, index) => (
                     <div
-                      key={index}
+                      key={index + 1}
                       style={{
-                        borderRadius: '12px',
+                        borderRadius: '16px',
                         overflow: 'hidden',
-                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
                         aspectRatio: '16/9',
                       }}
                     >
                       <iframe
-                        src={embedUrl}
+                        src={convertToEmbedUrl(videoUrl)}
                         style={{
                           width: '100%',
                           height: '100%',
                           border: 'none',
                         }}
-                        title={`Video ${index + 1}`}
+                        title={`Video ${index + 2}`}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                         allowFullScreen
                       />
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
+            {/* Images Gallery */}
+            {hasImages && (
+              <div>
+                <h2 style={{
+                  margin: '0 0 24px 0',
+                  fontSize: '28px',
+                  fontWeight: '700',
+                  color: '#fff',
+                  letterSpacing: '-0.5px',
+                }}>Gallery</h2>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: images && images.length === 1 ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))',
+                  gap: '24px',
+                }}>
+                  {images && images.map((image, index) => (
+                    <div key={index} style={{
+                      borderRadius: '16px',
+                      overflow: 'hidden',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      aspectRatio: '16/9',
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
+                    }}>
+                      <img
+                        src={image}
+                        alt={`${landmarkName} - Image ${index + 1}`}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
-          {/* Links Section */}
-          {links && links.length > 0 && (
-            <div style={{ marginBottom: '32px' }}>
-              <h3 style={{
-                margin: '0 0 16px 0',
-                fontSize: '18px',
-                fontWeight: '600',
-                color: '#fff',
-              }}>Links</h3>
+          {/* Right Column - Info Sidebar */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+            {/* Description Card */}
+            {hasDescription && (
               <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
+                padding: '32px',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: '20px',
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
               }}>
-                {links.map((link, index) => (
-                  <a
-                    key={index}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '16px 20px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid rgba(255, 255, 255, 0.12)',
-                      borderRadius: '10px',
-                      color: '#3b82f6',
-                      textDecoration: 'none',
-                      fontSize: '15px',
-                      fontWeight: '500',
-                      transition: 'all 0.2s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.12)';
-                      e.currentTarget.style.transform = 'translateX(4px)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
-                      e.currentTarget.style.transform = 'translateX(0)';
-                    }}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                      <path d="M11 3C10.4477 3 10 3.44772 10 4C10 4.55228 10.4477 5 11 5H13.5858L7.29289 11.2929C6.90237 11.6834 6.90237 12.3166 7.29289 12.7071C7.68342 13.0976 8.31658 13.0976 8.70711 12.7071L15 6.41421V9C15 9.55228 15.4477 10 16 10C16.5523 10 17 9.55228 17 9V4C17 3.44772 16.5523 3 16 3H11Z" fill="currentColor"/>
-                      <path d="M5 7C4.44772 7 4 7.44772 4 8V15C4 15.5523 4.44772 16 5 16H12C12.5523 16 13 15.5523 13 15V12C13 11.4477 13.4477 11 14 11C14.5523 11 15 11.4477 15 12V15C15 16.6569 13.6569 18 12 18H5C3.34315 18 2 16.6569 2 15V8C2 6.34315 3.34315 5 5 5H8C8.55228 5 9 5.44772 9 6C9 6.55228 8.55228 7 8 7H5Z" fill="currentColor"/>
-                    </svg>
-                    <span>{link.label || link.url}</span>
-                  </a>
-                ))}
+                <h2 style={{
+                  margin: '0 0 20px 0',
+                  fontSize: '28px',
+                  fontWeight: '700',
+                  color: '#fff',
+                  letterSpacing: '-0.5px',
+                }}>About</h2>
+                <p style={{
+                  margin: 0,
+                  fontSize: '18px',
+                  lineHeight: '1.8',
+                  color: 'rgba(255, 255, 255, 0.9)',
+                }}>{description}</p>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Links Card */}
+            {hasLinks && (
+              <div style={{
+                padding: '32px',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: '20px',
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+              }}>
+                <h2 style={{
+                  margin: '0 0 20px 0',
+                  fontSize: '28px',
+                  fontWeight: '700',
+                  color: '#fff',
+                  letterSpacing: '-0.5px',
+                }}>Quick Links</h2>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                }}>
+                  {links.map((link, index) => (
+                    <a
+                      key={index}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '16px',
+                        padding: '20px 24px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '14px',
+                        color: '#60a5fa',
+                        textDecoration: 'none',
+                        fontSize: '18px',
+                        fontWeight: '600',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(96, 165, 250, 0.15)';
+                        e.currentTarget.style.borderColor = 'rgba(96, 165, 250, 0.4)';
+                        e.currentTarget.style.transform = 'translateX(8px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                        e.currentTarget.style.transform = 'translateX(0)';
+                      }}
+                    >
+                      <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
+                        <path d="M11 3C10.4477 3 10 3.44772 10 4C10 4.55228 10.4477 5 11 5H13.5858L7.29289 11.2929C6.90237 11.6834 6.90237 12.3166 7.29289 12.7071C7.68342 13.0976 8.31658 13.0976 8.70711 12.7071L15 6.41421V9C15 9.55228 15.4477 10 16 10C16.5523 10 17 9.55228 17 9V4C17 3.44772 16.5523 3 16 3H11Z" fill="currentColor"/>
+                        <path d="M5 7C4.44772 7 4 7.44772 4 8V15C4 15.5523 4.44772 16 5 16H12C12.5523 16 13 15.5523 13 15V12C13 11.4477 13.4477 11 14 11C14.5523 11 15 11.4477 15 12V15C15 16.6569 13.6569 18 12 18H5C3.34315 18 2 16.6569 2 15V8C2 6.34315 3.34315 5 5 5H8C8.55228 5 9 5.44772 9 6C9 6.55228 8.55228 7 8 7H5Z" fill="currentColor"/>
+                      </svg>
+                      <span>{link.label || link.url}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Legacy iframe support (if contentUrl is provided but not in videos array) */}
           {contentUrl && !videos?.includes(contentUrl) && (
-            <div>
+            <div style={{ gridColumn: '1 / -1' }}>
               {iframeLoading && (
                 <div className={styles.loadingState}>
                   <div className={styles.spinner}></div>
@@ -333,9 +417,9 @@ const FullscreenModal: React.FC<FullscreenModalProps> = ({
                 className={styles.video}
                 style={{
                   width: '100%',
-                  height: '400px',
+                  height: '600px',
                   border: 'none',
-                  borderRadius: '12px',
+                  borderRadius: '20px',
                   display: iframeLoading || iframeError ? 'none' : 'block'
                 }}
                 title={landmarkName || 'Landmark Content'}
@@ -361,34 +445,61 @@ const FullscreenModal: React.FC<FullscreenModalProps> = ({
           )}
 
           {landmarkContent && (
-            <div className={styles.landmarkContent}>
+            <div className={styles.landmarkContent} style={{ gridColumn: '1 / -1' }}>
               <p>{landmarkContent}</p>
             </div>
           )}
         </div>
       </div>
-      <div className={styles.bottomBar}>
-        <div className={styles.actions}>
-          <button 
+      {/* Modal Navigation Bar - Only Close Button */}
+      <div style={{
+        position: 'fixed',
+        bottom: '32px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 50,
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          backdropFilter: 'blur(20px)',
+          padding: '8px',
+          borderRadius: '9999px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+        }}>
+          <motion.button
             onClick={onClose}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             style={{
-              fontSize: getScaledFontSize(18),
-              padding: `${getScaledPadding(12)}px ${getScaledPadding(28)}px`,
-              borderRadius: getScaledBorderRadius(6),
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '12px 24px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderRadius: '9999px',
+              color: 'rgba(255, 255, 255, 0.8)',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.color = '#fff';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
             }}
           >
-            Go Back to Map
-          </button>
-          <button 
-            onClick={onReset}
-            style={{
-              fontSize: getScaledFontSize(18),
-              padding: `${getScaledPadding(12)}px ${getScaledPadding(28)}px`,
-              borderRadius: getScaledBorderRadius(6),
-            }}
-          >
-            Reset Tour
-          </button>
+            <X size={18} strokeWidth={2.5} />
+            <span className="hidden md:inline">Close</span>
+          </motion.button>
         </div>
       </div>
     </div>

@@ -63,10 +63,11 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
       const reader = new FileReader();
       reader.onload = (event) => {
         const imageUrl = event.target?.result as string;
-        setZoneContent({
-          ...zoneContent,
-          images: [...(zoneContent.images || []), imageUrl],
-        });
+        // Use functional setState to get the latest state
+        setZoneContent(prevContent => ({
+          ...prevContent,
+          images: [...(prevContent.images || []), imageUrl],
+        }));
       };
       reader.readAsDataURL(file);
     });
@@ -400,8 +401,10 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
                       <img src={img} alt={`Upload ${idx}`} className="w-full h-24 object-cover rounded" />
                       <button
                         onClick={() => {
-                          const newImages = zoneContent.images?.filter((_, i) => i !== idx);
-                          setZoneContent({ ...zoneContent, images: newImages });
+                          setZoneContent(prevContent => ({
+                            ...prevContent,
+                            images: prevContent.images?.filter((_, i) => i !== idx) || [],
+                          }));
                         }}
                         className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
                       >
@@ -423,10 +426,10 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
                     if (e.key === 'Enter') {
                       const input = e.target as HTMLInputElement;
                       if (input.value) {
-                        setZoneContent({
-                          ...zoneContent,
-                          videos: [...(zoneContent.videos || []), input.value],
-                        });
+                        setZoneContent(prevContent => ({
+                          ...prevContent,
+                          videos: [...(prevContent.videos || []), input.value],
+                        }));
                         input.value = '';
                       }
                     }
@@ -440,8 +443,10 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
                       <span className="text-sm truncate flex-1">{video}</span>
                       <button
                         onClick={() => {
-                          const newVideos = zoneContent.videos?.filter((_, i) => i !== idx);
-                          setZoneContent({ ...zoneContent, videos: newVideos });
+                          setZoneContent(prevContent => ({
+                            ...prevContent,
+                            videos: prevContent.videos?.filter((_, i) => i !== idx) || [],
+                          }));
                         }}
                         className="text-red-500 ml-2"
                       >
@@ -469,10 +474,10 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
                       const labelInput = document.getElementById('link-label') as HTMLInputElement;
                       const urlInput = e.target as HTMLInputElement;
                       if (labelInput.value && urlInput.value) {
-                        setZoneContent({
-                          ...zoneContent,
-                          links: [...(zoneContent.links || []), { label: labelInput.value, url: urlInput.value }],
-                        });
+                        setZoneContent(prevContent => ({
+                          ...prevContent,
+                          links: [...(prevContent.links || []), { label: labelInput.value, url: urlInput.value }],
+                        }));
                         labelInput.value = '';
                         urlInput.value = '';
                       }
@@ -489,8 +494,10 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
                       </span>
                       <button
                         onClick={() => {
-                          const newLinks = zoneContent.links?.filter((_, i) => i !== idx);
-                          setZoneContent({ ...zoneContent, links: newLinks });
+                          setZoneContent(prevContent => ({
+                            ...prevContent,
+                            links: prevContent.links?.filter((_, i) => i !== idx) || [],
+                          }));
                         }}
                         className="text-red-500"
                       >

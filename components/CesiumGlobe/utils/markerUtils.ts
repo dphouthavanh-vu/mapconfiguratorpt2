@@ -114,12 +114,12 @@ export async function createMarkerImage({
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${adjustedWidth}" height="${adjustedHeight}" fill="none" preserveAspectRatio="xMidYMid meet">
       <defs>
-        <!-- Apple Maps style shadow -->
-        <filter id="appleShadow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
-          <feOffset dx="0" dy="2" result="offsetblur"/>
+        <!-- Modern glassmorphic shadow -->
+        <filter id="modernShadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+          <feOffset dx="0" dy="4" result="offsetblur"/>
           <feComponentTransfer>
-            <feFuncA type="linear" slope="0.2"/>
+            <feFuncA type="linear" slope="0.3"/>
           </feComponentTransfer>
           <feMerge>
             <feMergeNode/>
@@ -129,7 +129,7 @@ export async function createMarkerImage({
       </defs>
 
       <g transform="translate(${shadowPadding}, ${shadowPadding})">
-        <!-- Solid white pill background -->
+        <!-- Dark glassmorphic pill background -->
         <rect
           x="0"
           y="0"
@@ -137,11 +137,11 @@ export async function createMarkerImage({
           height="${pillHeight}"
           rx="${borderRadius}"
           ry="${borderRadius}"
-          fill="rgba(255,255,255,0.95)"
-          filter="url(#appleShadow)"
+          fill="rgba(0,0,0,0.7)"
+          filter="url(#modernShadow)"
         />
 
-        <!-- Light gray border for definition -->
+        <!-- Subtle white border -->
         <rect
           x="0"
           y="0"
@@ -150,16 +150,16 @@ export async function createMarkerImage({
           rx="${borderRadius}"
           ry="${borderRadius}"
           fill="none"
-          stroke="rgba(0,0,0,0.1)"
-          stroke-width="0.5"
+          stroke="rgba(255,255,255,0.15)"
+          stroke-width="1"
         />
 
-        <!-- Blue icon circle (brand color) -->
+        <!-- Icon circle with subtle glow -->
         <circle
           cx="${leftPadding + iconSize / 2}"
           cy="${pillHeight / 2}"
           r="${iconSize / 2}"
-          fill="#3b82f6"
+          fill="rgba(255,255,255,0.2)"
         />
 
         <!-- Icon logo if provided -->
@@ -169,17 +169,17 @@ export async function createMarkerImage({
           width="16"
           height="16"
           href="${logoDataUrl}"
-          opacity="1"
+          opacity="0.9"
         />
 
-        <!-- Dark text for high contrast -->
+        <!-- White text with subtle opacity -->
         <text
           x="${leftPadding + iconSize + iconTextGap}"
           y="${pillHeight / 2}"
           font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif"
           font-weight="600"
           font-size="${fontSize - 3}"
-          fill="rgba(0,0,0,0.85)"
+          fill="rgba(255,255,255,0.9)"
           text-anchor="start"
           dominant-baseline="middle"
           letter-spacing="-0.2"
@@ -304,12 +304,12 @@ export async function createClusterMarkerImage({
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${adjustedWidth}" height="${adjustedHeight}" fill="none" preserveAspectRatio="xMidYMid meet">
       <defs>
-        <!-- Enhanced cluster shadow -->
-        <filter id="clusterAppleShadow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
-          <feOffset dx="0" dy="3" result="offsetblur"/>
+        <!-- Enhanced modern cluster shadow -->
+        <filter id="clusterModernShadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="7"/>
+          <feOffset dx="0" dy="4" result="offsetblur"/>
           <feComponentTransfer>
-            <feFuncA type="linear" slope="0.25"/>
+            <feFuncA type="linear" slope="0.35"/>
           </feComponentTransfer>
           <feMerge>
             <feMergeNode/>
@@ -319,7 +319,7 @@ export async function createClusterMarkerImage({
       </defs>
 
       <g transform="translate(${shadowPadding}, ${shadowPadding})">
-        <!-- Solid white pill shape for cluster -->
+        <!-- Dark glassmorphic pill shape for cluster -->
         <rect
           x="0"
           y="0"
@@ -327,11 +327,11 @@ export async function createClusterMarkerImage({
           height="${pillHeight}"
           rx="${borderRadius}"
           ry="${borderRadius}"
-          fill="rgba(255,255,255,0.95)"
-          filter="url(#clusterAppleShadow)"
+          fill="rgba(0,0,0,0.75)"
+          filter="url(#clusterModernShadow)"
         />
 
-        <!-- Light gray border -->
+        <!-- Subtle white border -->
         <rect
           x="0"
           y="0"
@@ -340,16 +340,16 @@ export async function createClusterMarkerImage({
           rx="${borderRadius}"
           ry="${borderRadius}"
           fill="none"
-          stroke="rgba(0,0,0,0.12)"
-          stroke-width="0.5"
+          stroke="rgba(255,255,255,0.2)"
+          stroke-width="1"
         />
 
-        <!-- Count badge (left side) - red/orange for clusters like Apple Maps -->
+        <!-- Count badge (left side) - accent color for clusters -->
         <circle
           cx="18"
           cy="${pillHeight / 2}"
           r="12"
-          fill="#ef4444"
+          fill="rgba(239,68,68,0.9)"
         />
 
         <!-- Badge number in white -->
@@ -364,14 +364,14 @@ export async function createClusterMarkerImage({
           dominant-baseline="middle"
         >${escapeHtml(text.split(' ')[0])}</text>
 
-        <!-- Cluster text in dark for high contrast -->
+        <!-- Cluster text in white -->
         <text
           x="${dynamicWidth / 2}"
           y="${pillHeight / 2}"
           font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif"
           font-weight="600"
           font-size="${calculatedFontSize}"
-          fill="rgba(0,0,0,0.85)"
+          fill="rgba(255,255,255,0.9)"
           text-anchor="middle"
           dominant-baseline="middle"
           letter-spacing="-0.2"
