@@ -131,13 +131,12 @@ export default function CreateMapPage() {
         {(['info', 'canvas', 'blueprint', 'zones'] as Step[]).map((step, index) => (
           <div key={step} className="flex items-center">
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                currentStep === step
+              className={`w-10 h-10 rounded-full flex items-center justify-center ${currentStep === step
                   ? 'bg-blue-600 text-white'
                   : index < ['info', 'canvas', 'blueprint', 'zones'].indexOf(currentStep)
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-300 text-gray-600'
-              }`}
+                    ? 'bg-green-600 text-white'
+                    : 'bg-gray-300 text-gray-600'
+                }`}
             >
               {index + 1}
             </div>
@@ -163,6 +162,16 @@ export default function CreateMapPage() {
       router.push('/');
     }
   };
+
+  if (currentStep === 'zones') {
+    console.log('[Create] Rendering ZoneEditor with:', {
+      blueprintUrl,
+      mapImageUrl: mapImageUrl ? mapImageUrl.substring(0, 100) : 'none',
+      imageUrl: blueprintUrl || mapImageUrl || 'undefined',
+      canvasWidth: canvasConfig.width,
+      canvasHeight: canvasConfig.height,
+    });
+  }
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-7xl">
@@ -242,13 +251,6 @@ export default function CreateMapPage() {
 
       {currentStep === 'zones' && (
         <div className="max-w-7xl mx-auto">
-          {console.log('[Create] Rendering ZoneEditor with:', {
-            blueprintUrl,
-            mapImageUrl: mapImageUrl ? mapImageUrl.substring(0, 100) : 'none',
-            imageUrl: blueprintUrl || mapImageUrl || 'undefined',
-            canvasWidth: canvasConfig.width,
-            canvasHeight: canvasConfig.height,
-          })}
           <ZoneEditor
             imageUrl={blueprintUrl || mapImageUrl || undefined}
             canvasWidth={canvasConfig.width}

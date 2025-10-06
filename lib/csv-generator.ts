@@ -16,6 +16,10 @@ interface LandmarkCSV {
   icon: string;
   color?: string;
   contentUrl?: string;
+  description?: string;
+  images?: string[];
+  links?: Array<{url: string; label?: string}>;
+  videos?: string[];
 }
 
 /**
@@ -154,6 +158,20 @@ export function zonesToLandmarks(
       landmark.contentUrl = content.videos[0];
     } else if (content.links && content.links.length > 0) {
       landmark.contentUrl = content.links[0].url;
+    }
+
+    // Add full content data for modal display
+    if (content.description) {
+      landmark.description = content.description;
+    }
+    if (content.images && content.images.length > 0) {
+      landmark.images = content.images;
+    }
+    if (content.links && content.links.length > 0) {
+      landmark.links = content.links;
+    }
+    if (content.videos && content.videos.length > 0) {
+      landmark.videos = content.videos;
     }
 
     return landmark;

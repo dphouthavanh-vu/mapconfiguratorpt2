@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Map {
+  id               String   @id @default(cuid())
+  title            String
+  description      String?
+  // Geographic bounds for the canvas area (JSON: {minLat, maxLat, minLng, maxLng})
+  geographicBounds String?
+  // Canvas configuration (JSON: {width, height, coordinateSystem, etc.})
+  canvasConfig     String
+  // URL to uploaded blueprint/floor plan image
+  imageUrl         String?
+  // Whether the map uses base map imagery or uploaded blueprint
+  useBaseMap       Boolean  @default(false)
+  // Published status
+  published        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  zones Zone[]
+}
+
+model Zone {
+  id          String   @id @default(cuid())
+  mapId       String
+  // Zone type: 'point', 'rectangle', 'circle', 'polygon'
+  type        String
+  // Coordinates in JSON format
+  // Point: {x, y}
+  // Rectangle: {x, y, width, height}
+  // Circle: {x, y, radius}
+  // Polygon: {points: [{x, y}, {x, y}, ...]}
+  coordinates String
+  // Content for this zone (JSON: {title, description, images, links})
+  content     String
+  // Style configuration (JSON: {color, borderColor, opacity, icon, etc.})
+  style       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  map Map @relation(fields: [mapId], references: [id], onDelete: Cascade)
+
+  @@index([mapId])
+}

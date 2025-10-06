@@ -345,9 +345,17 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
           </CardContent>
         </Card>
 
-        <Button onClick={() => onSave(zones)} className="w-full" size="lg">
+        <Button
+          onClick={() => {
+            console.log("Saving zones:", JSON.stringify(zones, null, 2));
+            onSave(zones);
+          }}
+          className="w-full"
+          size="lg"
+        >
           Save Map
         </Button>
+
       </div>
 
       {/* Content Dialog */}

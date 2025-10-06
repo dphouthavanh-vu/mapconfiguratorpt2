@@ -21,7 +21,7 @@ import { useDepthLayers } from './hooks/useDepthLayers';
 // const ATL_HEIGHT = 2000; // meters above ground for zoom target
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
 
- 
+
 
 // Props for CesiumGlobe component
 interface CesiumGlobeProps {
@@ -141,7 +141,7 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
     animationFrameRef.current = requestAnimationFrame(animate);
   }, []);
 
-  
+
 
 
 
@@ -259,9 +259,9 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
       viewer.clock.shouldAnimate = atmosphereConfig.timeOfDay.animationSpeed > 0;
       viewer.clock.multiplier = atmosphereConfig.timeOfDay.animationSpeed * 3600; // Convert hours per second
 
-  // Use default sun light that follows the clock
-  viewer.scene.light = new Cesium.SunLight();
-  if (viewer.scene.sun) viewer.scene.sun.show = atmosphereConfig.sunVisuals.showSun;
+      // Use default sun light that follows the clock
+      viewer.scene.light = new Cesium.SunLight();
+      if (viewer.scene.sun) viewer.scene.sun.show = atmosphereConfig.sunVisuals.showSun;
     }
     // Handle custom sun position
     else if (atmosphereConfig.sunPosition.enabled) {
@@ -320,8 +320,8 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
 
       // Use sun light for natural lighting and atmosphere alignment
       // The SunLight will make the atmosphere effects follow the sun position
-  viewer.scene.light = new Cesium.SunLight();
-  if (viewer.scene.sun) viewer.scene.sun.show = atmosphereConfig.sunVisuals.showSun;
+      viewer.scene.light = new Cesium.SunLight();
+      if (viewer.scene.sun) viewer.scene.sun.show = atmosphereConfig.sunVisuals.showSun;
 
       // Note: We're now using the clock time to position both the sun disk
       // AND the atmosphere effects, so they stay aligned.
@@ -333,8 +333,8 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
       viewer.scene.sun.show = atmosphereConfig.sunVisuals.showSun;
     }
 
-  // Apply sun glow size (guard sun)
-  if (viewer.scene.sun) viewer.scene.sun.glowFactor = atmosphereConfig.sunVisuals.glowSize;
+    // Apply sun glow size (guard sun)
+    if (viewer.scene.sun) viewer.scene.sun.glowFactor = atmosphereConfig.sunVisuals.glowSize;
 
     // Apply light intensity to atmosphere and globe with progressive loading
     const progressiveIntensity = atmosphereConfig.atmosphere.lightIntensity * atmosphereIntensityProgress;
@@ -731,46 +731,46 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
   // Set up click handler once when entities are ready
   const setupClickHandler = useCallback(() => {
     if (!entitiesReady || !viewerRef.current) return;
-    
+
     const viewer = viewerRef.current;
-    
+
     // Remove any existing click handler first
     viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
-    
+
     // Set up the new click handler
     viewer.screenSpaceEventHandler.setInputAction((movement: unknown) => {
       const pos = ((movement as { position?: unknown }).position) as unknown as Cesium.Cartesian2;
       const pickedObject = viewer.scene.pick(pos);
-      
+
       if (pickedObject) {
-        
+
         // Debug: Log the full structure of the picked object
         if (pickedObject.id) {
         }
-        
+
         if (pickedObject.primitive) {
         }
       } else {
       }
 
-              // Check if this is a cluster click first
-        if (pickedObject && pickedObject.id && pickedObject.id.clusteredEntities) {
-          const clusteredEntities = pickedObject.id.clusteredEntities;
-          
-          // Use the dedicated cluster zoom utility
-          handleClusterZoom(viewer, clusteredEntities, rotatingRef, animationFrameRef, undefined, lastClusterZoomHeightRef);
+      // Check if this is a cluster click first
+      if (pickedObject && pickedObject.id && pickedObject.id.clusteredEntities) {
+        const clusteredEntities = pickedObject.id.clusteredEntities;
 
-          // Disable adaptive clustering permanently until user clicks reset/go back
-          isInteractingWithClusterRef.current = true;
-          disableAdaptiveClusteringRef.current = true;
+        // Use the dedicated cluster zoom utility
+        handleClusterZoom(viewer, clusteredEntities, rotatingRef, animationFrameRef, undefined, lastClusterZoomHeightRef);
 
-          return; // Exit early, don't process as individual landmark click
-        }
-      
-            // Also check if cluster is accessed via primitive
+        // Disable adaptive clustering permanently until user clicks reset/go back
+        isInteractingWithClusterRef.current = true;
+        disableAdaptiveClusteringRef.current = true;
+
+        return; // Exit early, don't process as individual landmark click
+      }
+
+      // Also check if cluster is accessed via primitive
       if (pickedObject && pickedObject.primitive && pickedObject.primitive.clusteredEntities) {
         const clusteredEntities = pickedObject.primitive.clusteredEntities;
-        
+
         // Use the dedicated cluster zoom utility
         // Mark that this is a cluster zoom to prevent storing camera position
         // const isClusterZoom = true; // Unused
@@ -788,7 +788,7 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
         const lon = pickedObject.id.properties.lon?.getValue();
         const lat = pickedObject.id.properties.lat?.getValue();
         const height = pickedObject.id.properties.height?.getValue() ?? 0;
-        
+
         // Store current camera state before zooming in
         if (viewerRef.current) {
           previousCameraStateRef.current = {
@@ -798,9 +798,9 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
             right: viewerRef.current.camera.right.clone(),
           };
         }
-        
+
         // Note: We'll apply exact clustering parameters (3, 3, 7) directly in "go back to map"
-        
+
         handlePinClick(viewerRef.current, rotatingRef, animationFrameRef, lon, lat, height);
 
         // Find the landmark index by matching lon/lat
@@ -828,7 +828,7 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
 
   // State to hold the captured logo size for the fly-through entity
   const [capturedLogoSize, setCapturedLogoSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
-  
+
 
 
   useFlyThroughEntity({
@@ -863,7 +863,7 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
       return;
     }
     setShowReset(true);
-    
+
     // Calculate the center of all landmarks first
     const positions = entityRefs.current.map(entity => {
       if (entity.properties) {
@@ -874,20 +874,20 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
       }
       return Cesium.Cartesian3.fromDegrees(0, 0, 0);
     });
-    
+
     const boundingSphere = Cesium.BoundingSphere.fromPoints(positions);
     const centerCartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(boundingSphere.center);
     const targetLon = Cesium.Math.toDegrees(centerCartographic.longitude);
     // const targetLat = Cesium.Math.toDegrees(centerCartographic.latitude); // Unused
-    
+
     // We'll set the fly-through entity position after the zoom completes
     // so we can position it relative to the final camera height
-    
+
     // Start the smart spin that will end over landmarks
     fastSpinActive.current = true;
     spinningStopped.current = false;
     rotatingRef.current = true;
-    
+
     // Get ACTUAL current camera state - EVERYTHING
     let startLon = 0;
     let startLat = 0;
@@ -950,18 +950,18 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
         // Use inverse high power for very gentle landing
         easeOut = 0.95 + (1 - Math.pow(1 - landProgress, 5)) * 0.05;
       }
-      
+
       // Calculate current longitude
       const currentRotation = totalRotation * easeOut;
       let currentLon = startLon + currentRotation;
-      
+
       // Normalize longitude for camera positioning
       while (currentLon > 180) currentLon -= 360;
       while (currentLon < -180) currentLon += 360;
-      
+
       // Update the ref with normalized value
       spinLongitudeRef.current = currentLon;
-      
+
       if (viewerRef.current) {
         // Interpolate all camera properties smoothly
         const targetLat = 20; // Target latitude to look at during spin
@@ -990,7 +990,7 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
           }
         });
       }
-      
+
       if (progress < 1) {
         animationFrameRef.current = requestAnimationFrame(smartAnimate);
       } else {
@@ -998,46 +998,46 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
         fastSpinActive.current = false;
         spinningStopped.current = true;
         rotatingRef.current = false;
-        
-        
+
+
         // Capture the current logo size before hiding the overlay
         const currentLogoSize = { ...logoSize };
         setCapturedLogoSize(currentLogoSize);
-        
+
         // Show the fly-through entity at the current camera's target location (where overlay button is)
         if (viewerRef.current) {
           const cameraPos = viewerRef.current.camera.position;
           const cameraCartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(cameraPos);
           const cameraLon = Cesium.Math.toDegrees(cameraCartographic.longitude);
           const cameraLat = Cesium.Math.toDegrees(cameraCartographic.latitude);
-          
+
           // Position the entity at a reasonable distance and height from the camera
           // const entityDistance = 10000000; // 10,000km - reasonable distance // Unused
           const heightOffset = 5000000; // 5,000km above ground - not too high
-          
+
           // Use a simpler approach: position the entity at a fixed offset from camera
           // This gives us more control over the positioning
           const latOffset = -0.005; // 1 degree north of camera (smaller offset)
           const lonOffset = 0; // Same longitude as camera
-          
+
           flyThroughPositionRef.current = {
             lon: cameraLon + lonOffset,
             lat: cameraLat + latOffset, // Move north slightly to avoid being too far south
             height: heightOffset // Fixed height above ground, not relative to camera
           };
-          
+
         }
-        
+
         // Show the fly-through entity right away with the captured logo size
         // setShowFlyThroughEntity(true);
-        
-        
+
+
         // Wait a bit longer to ensure logo measurement completes before hiding overlay
         setTimeout(() => {
           // Now hide the overlay after capturing the size
           setShowOverlay(false);
         }, 200); // Increased delay to ensure measurement completes
-        
+
         // Use requestAnimationFrame to wait for DOM update before starting zoom operations
         requestAnimationFrame(() => {
           setTimeout(() => {
@@ -1046,53 +1046,80 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
               if (dataSourceRef.current && !viewerRef.current.dataSources.contains(dataSourceRef.current)) {
                 viewerRef.current.dataSources.add(dataSourceRef.current);
               }
-              
-              // Note: We'll store clustering parameters after the zoom completes when adaptive clustering has updated
-              
-            
-            // Debug camera position
-            const cameraPos = viewerRef.current.camera.position;
-            const cameraCartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(cameraPos);
-            const cameraLon = Cesium.Math.toDegrees(cameraCartographic.longitude);
-            // const cameraLat = Cesium.Math.toDegrees(cameraCartographic.latitude); // Unused
-            // const cameraHeight = cameraCartographic.height; // Unused
-            
-            
-            // Force camera position if it's not where it should be
-            if (Math.abs(cameraLon - targetLon) > 1) {
-              viewerRef.current.camera.setView({
-                destination: Cesium.Cartesian3.fromDegrees(
-                  targetLon,
-                  0,  // Changed from 20 to 0 to look at center of globe
-                  fitDistanceRef.current
-                ),
-                orientation: {
-                  heading: Cesium.Math.toRadians(0),
-                  pitch: Cesium.Math.toRadians(-90),
-                  roll: 0.0
-                }
-              });
-              
-              // Wait a frame for the position to update
-              requestAnimationFrame(() => {
-                const newPos = viewerRef.current!.camera.position;
-                const newCartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(newPos);
-                // const newLon = Cesium.Math.toDegrees(newCartographic.longitude); // Unused
-                
 
-                
-                // Now do the zoom
-                viewerRef.current!.camera.flyToBoundingSphere(boundingSphere, {
+              // Note: We'll store clustering parameters after the zoom completes when adaptive clustering has updated
+
+
+              // Debug camera position
+              const cameraPos = viewerRef.current.camera.position;
+              const cameraCartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(cameraPos);
+              const cameraLon = Cesium.Math.toDegrees(cameraCartographic.longitude);
+              // const cameraLat = Cesium.Math.toDegrees(cameraCartographic.latitude); // Unused
+              // const cameraHeight = cameraCartographic.height; // Unused
+
+
+              // Force camera position if it's not where it should be
+              if (Math.abs(cameraLon - targetLon) > 1) {
+                viewerRef.current.camera.setView({
+                  destination: Cesium.Cartesian3.fromDegrees(
+                    targetLon,
+                    0,  // Changed from 20 to 0 to look at center of globe
+                    fitDistanceRef.current
+                  ),
+                  orientation: {
+                    heading: Cesium.Math.toRadians(0),
+                    pitch: Cesium.Math.toRadians(-90),
+                    roll: 0.0
+                  }
+                });
+
+                // Wait a frame for the position to update
+                requestAnimationFrame(() => {
+                  const newPos = viewerRef.current!.camera.position;
+                  const newCartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(newPos);
+                  // const newLon = Cesium.Math.toDegrees(newCartographic.longitude); // Unused
+
+
+
+                  // Now do the zoom
+                  viewerRef.current!.camera.flyToBoundingSphere(boundingSphere, {
+                    duration: 5.0,
+                    offset: new Cesium.HeadingPitchRange(0, -Math.PI / 2, boundingSphere.radius * 3),
+                    complete: () => {
+                      // Entity is already visible from when overlay was hidden
+
+                      // Store the final position for "go back to map" functionality
+                      if (viewerRef.current) {
+                        // const cameraPos = viewerRef.current.camera.position; // Unused
+                        // const cameraCartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(cameraPos); // Unused
+
+                        spinAndZoomFinalPositionRef.current = {
+                          destination: viewerRef.current.camera.position.clone(),
+                          orientation: {
+                            heading: viewerRef.current.camera.heading,
+                            pitch: viewerRef.current.camera.pitch,
+                            roll: viewerRef.current.camera.roll
+                          }
+                        };
+
+                        // Note: Clustering parameters are now stored when a pin is clicked, not here
+                      }
+                    }
+                  });
+                });
+              } else {
+
+
+
+                // Do the zoom from current correct position
+                viewerRef.current.camera.flyToBoundingSphere(boundingSphere, {
                   duration: 5.0,
-                  offset: new Cesium.HeadingPitchRange(0, -Math.PI/2, boundingSphere.radius * 3),
+                  offset: new Cesium.HeadingPitchRange(0, -Math.PI / 2, boundingSphere.radius * 3),
                   complete: () => {
                     // Entity is already visible from when overlay was hidden
-                    
+
                     // Store the final position for "go back to map" functionality
                     if (viewerRef.current) {
-                      // const cameraPos = viewerRef.current.camera.position; // Unused
-                      // const cameraCartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(cameraPos); // Unused
-                      
                       spinAndZoomFinalPositionRef.current = {
                         destination: viewerRef.current.camera.position.clone(),
                         orientation: {
@@ -1101,47 +1128,20 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
                           roll: viewerRef.current.camera.roll
                         }
                       };
-                      
+
                       // Note: Clustering parameters are now stored when a pin is clicked, not here
                     }
                   }
                 });
-              });
+              }
             } else {
-              
-
-              
-              // Do the zoom from current correct position
-              viewerRef.current.camera.flyToBoundingSphere(boundingSphere, {
-                duration: 5.0,
-                offset: new Cesium.HeadingPitchRange(0, -Math.PI/2, boundingSphere.radius * 3),
-                complete: () => {
-                  // Entity is already visible from when overlay was hidden
-                  
-                  // Store the final position for "go back to map" functionality
-                  if (viewerRef.current) {
-                    spinAndZoomFinalPositionRef.current = {
-                      destination: viewerRef.current.camera.position.clone(),
-                      orientation: {
-                        heading: viewerRef.current.camera.heading,
-                        pitch: viewerRef.current.camera.pitch,
-                        roll: viewerRef.current.camera.roll
-                      }
-                    };
-                    
-                    // Note: Clustering parameters are now stored when a pin is clicked, not here
-                  }
-                }
-              });
+              console.warn('No entities available for zoom or viewer not ready');
             }
-          } else {
-            console.warn('No entities available for zoom or viewer not ready');
-          }
           }, 50); // Short delay after DOM update
         });
       }
     };
-    
+
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
@@ -1155,73 +1155,73 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
       return;
     }
 
-    
+
     // Ensure rotation stays stopped and UI state is maintained
     rotatingRef.current = false;
     spinningStopped.current = true;
     fastSpinActive.current = false;
-    
+
     // Hide the fly-through entity when zooming back out
     setShowFlyThroughEntity(false);
-    
+
     // Clear the captured logo size to prevent re-use
     setCapturedLogoSize({ width: 0, height: 0 });
-    
+
     // Clean up all fly-through primitives from the scene
     if (viewerRef.current && viewerRef.current.scene) {
       const scene = viewerRef.current.scene;
-      
+
       // Find and remove all fly-through primitives
       for (let i = scene.primitives.length - 1; i >= 0; i--) {
         const primitive = scene.primitives.get(i);
-        if (primitive && 
-            primitive.appearance && 
-            primitive.appearance.material && 
-            primitive.appearance.material.uniforms && 
-            primitive.appearance.material.uniforms.image && 
-            primitive.appearance.material.uniforms.image.indexOf('tghMainLogo.svg') !== -1) {
+        if (primitive &&
+          primitive.appearance &&
+          primitive.appearance.material &&
+          primitive.appearance.material.uniforms &&
+          primitive.appearance.material.uniforms.image &&
+          primitive.appearance.material.uniforms.image.indexOf('tghMainLogo.svg') !== -1) {
           scene.primitives.remove(primitive);
         }
       }
-      
+
       // Also clear the ref
       flyThroughPrimitiveRef.current = null;
     }
-    
+
     // Cancel any ongoing animation frames
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
-    
+
     // Check if we have a stored position from spin and zoom
     if (spinAndZoomFinalPositionRef.current) {
-      
-              // Apply exact clustering parameters (3, 3, 7) for "go back to map"
-        if (dataSourceRef.current && viewerRef.current) {
-          
-          // Log current clustering parameters before changes
-          
-          // Re-enable adaptive clustering since user is going back to map
-          isInteractingWithClusterRef.current = false;
-          lastClusterZoomHeightRef.current = null;
-          disableAdaptiveClusteringRef.current = false;
-        
+
+      // Apply exact clustering parameters (3, 3, 7) for "go back to map"
+      if (dataSourceRef.current && viewerRef.current) {
+
+        // Log current clustering parameters before changes
+
+        // Re-enable adaptive clustering since user is going back to map
+        isInteractingWithClusterRef.current = false;
+        lastClusterZoomHeightRef.current = null;
+        disableAdaptiveClusteringRef.current = false;
+
         // Set the exact clustering parameters directly - use aggressive parameters to ensure clustering
         dataSourceRef.current.clustering.pixelRange = 90;
         dataSourceRef.current.clustering.minimumClusterSize = 3;
-        
-        
-                // Force cluster regeneration multiple times to ensure it takes effect
+
+
+        // Force cluster regeneration multiple times to ensure it takes effect
         const forceClustering = () => {
           if (dataSourceRef.current && viewerRef.current) {
             // Re-apply parameters to ensure they stick
             dataSourceRef.current.clustering.pixelRange = 90;
             dataSourceRef.current.clustering.minimumClusterSize = 3;
-            
+
             dataSourceRef.current.clustering.enabled = true;
             viewerRef.current.scene.requestRender();
-            
+
             // Force a camera move to trigger clustering update
             const currentPosition = viewerRef.current.camera.position.clone();
             viewerRef.current.camera.setView({
@@ -1232,7 +1232,7 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
                 roll: viewerRef.current.camera.roll
               }
             });
-            
+
             setTimeout(() => {
               if (dataSourceRef.current && viewerRef.current) {
                 // Re-apply parameters again after re-enabling
@@ -1240,7 +1240,7 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
                 dataSourceRef.current.clustering.minimumClusterSize = 3;
                 dataSourceRef.current.clustering.enabled = true;
                 viewerRef.current.scene.requestRender();
-                
+
                 // Add debugging to check if cluster event is being triggered
                 if (dataSourceRef.current.clustering && dataSourceRef.current.clustering.clusterEvent) {
                   // Try to manually trigger a cluster update
@@ -1256,28 +1256,28 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
             }, 10);
           }
         };
-        
+
         // Apply clustering multiple times to ensure it sticks
         forceClustering();
         setTimeout(forceClustering, 50);
         setTimeout(forceClustering, 100);
         setTimeout(forceClustering, 200);
         setTimeout(forceClustering, 500);
-        
+
         // Record the time when parameters were applied
         clusteringRestoreTimeRef.current = Date.now();
-        
+
         // Add additional verification after a longer delay
         setTimeout(() => {
           if (dataSourceRef.current && viewerRef.current) {
-            
+
             // Debug: Log entity positions to understand clustering behavior
             const entities = dataSourceRef.current.entities.values;
-            
+
             // Log positions of all entities to understand their spatial distribution
             const entityPositions = [];
             const northernEntities = [];
-            
+
             for (let i = 0; i < entities.length; i++) {
               const entity = entities[i];
               if (entity.position) {
@@ -1296,52 +1296,52 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
                     hasLabel: !!entity.label,
                     hasPoint: !!entity.point
                   };
-                  
+
                   entityPositions.push(entityInfo);
-                  
-                              // Check if this is a northern entity (latitude > 28 degrees - Tampa area)
-            if (entityInfo.latitude > 28) {
-              northernEntities.push(entityInfo);
-            }
+
+                  // Check if this is a northern entity (latitude > 28 degrees - Tampa area)
+                  if (entityInfo.latitude > 28) {
+                    northernEntities.push(entityInfo);
+                  }
                 }
               }
             }
-            
-            
+
+
             // If we found northern entities, analyze their distances
             if (northernEntities.length >= 3) {
-              
+
               // Calculate distances between northern entities
               for (let i = 0; i < northernEntities.length; i++) {
                 for (let j = i + 1; j < northernEntities.length; j++) {
                   // const entity1 = northernEntities[i]; // Unused
                   // const entity2 = northernEntities[j]; // Unused
-                  
+
                   // Calculate distance in degrees
                   // const latDiff = Math.abs(entity1.latitude - entity2.latitude); // Unused
                   // const lonDiff = Math.abs(entity1.longitude - entity2.longitude); // Unused
                   // const distanceDegrees = Math.sqrt(latDiff * latDiff + lonDiff * lonDiff); // Unused
-                  
+
                 }
               }
             }
-            
+
             // Analyze all entities for potential clustering issues
             const closeEntityGroups = [];
-            
+
             for (let i = 0; i < entityPositions.length; i++) {
               for (let j = i + 1; j < entityPositions.length; j++) {
                 const entity1 = entityPositions[i];
                 const entity2 = entityPositions[j];
-                
+
                 // Calculate distance in degrees
                 const latDiff = Math.abs(entity1.latitude - entity2.latitude);
                 const lonDiff = Math.abs(entity1.longitude - entity2.longitude);
                 const distanceDegrees = Math.sqrt(latDiff * latDiff + lonDiff * lonDiff);
-                
+
                 // If entities are very close (within 0.01 degrees), they should cluster
                 if (distanceDegrees < 0.01) {
-                  
+
                   // Check if we already have a group for these entities
                   let foundGroup = false;
                   for (const group of closeEntityGroups) {
@@ -1352,18 +1352,18 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
                       break;
                     }
                   }
-                  
+
                   if (!foundGroup) {
                     closeEntityGroups.push([entity1.id, entity2.id]);
                   }
                 }
               }
             }
-            
-            
+
+
             // Check for groups of 3 or more entities that should cluster
             const groupsOfThreeOrMore = closeEntityGroups.filter(group => group.length >= 3);
-            
+
             // Log detailed information about each group
             for (let i = 0; i < groupsOfThreeOrMore.length; i++) {
               const group = groupsOfThreeOrMore[i];
@@ -1373,9 +1373,9 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
                 }
               }
             }
-            
+
             // Check if clusters are actually visible
-            
+
             // Check if entities are being clustered by looking at their visibility
             let visibleEntities = 0;
             let clusteredEntities = 0;
@@ -1390,78 +1390,78 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
                 }
               }
             }
-            
+
             // Check camera state and screen coordinates
             // const camera = viewerRef.current.camera; // Unused
             // const canvas = viewerRef.current.canvas; // Unused
             // const cameraHeight = camera.positionCartographic.height; // Unused
             // const screenWidth = canvas.width; // Unused
             // const screenHeight = canvas.height; // Unused
-            
-            
+
+
             // Check if entities are close enough in screen space to cluster
-            
+
             // Specifically check the Healthpark area entities
-            const healthparkEntities = entityPositions.filter(entity => 
-              entity.name.includes('Healthpark') || 
+            const healthparkEntities = entityPositions.filter(entity =>
+              entity.name.includes('Healthpark') ||
               entity.name.includes('Family Care Center Healthpark') ||
               entity.name.includes('USF Internal Medicine Healthpark')
             );
-            
+
             // healthparkEntities.forEach(entity => { // Unused
             // });
-            
+
             // Check distances between Healthpark entities specifically
             if (healthparkEntities.length >= 2) {
               for (let i = 0; i < healthparkEntities.length; i++) {
                 for (let j = i + 1; j < healthparkEntities.length; j++) {
                   const entity1 = healthparkEntities[i];
                   const entity2 = healthparkEntities[j];
-                  
+
                   // Calculate geographic distance
                   // const latDiff = Math.abs(entity1.latitude - entity2.latitude); // Unused
                   // const lonDiff = Math.abs(entity1.longitude - entity2.longitude); // Unused
                   // const distanceDegrees = Math.sqrt(latDiff * latDiff + lonDiff * lonDiff); // Unused
-                  
+
                   // Convert to screen coordinates
                   const screenPos1 = Cesium.SceneTransforms.worldToWindowCoordinates(viewerRef.current.scene, entity1.position);
                   const screenPos2 = Cesium.SceneTransforms.worldToWindowCoordinates(viewerRef.current.scene, entity2.position);
-                  
+
                   if (screenPos1 && screenPos2) {
                     const screenDistance = Math.sqrt(
-                      Math.pow(screenPos1.x - screenPos2.x, 2) + 
+                      Math.pow(screenPos1.x - screenPos2.x, 2) +
                       Math.pow(screenPos1.y - screenPos2.y, 2)
                     );
-                    
+
                   }
                 }
               }
             }
-            
+
             // Check all entity pairs for screen distances
             for (let i = 0; i < Math.min(5, entityPositions.length); i++) {
               for (let j = i + 1; j < Math.min(5, entityPositions.length); j++) {
                 const entity1 = entityPositions[i];
                 const entity2 = entityPositions[j];
-                
+
                 // Convert to screen coordinates
                 const screenPos1 = Cesium.SceneTransforms.worldToWindowCoordinates(viewerRef.current.scene, entity1.position);
                 const screenPos2 = Cesium.SceneTransforms.worldToWindowCoordinates(viewerRef.current.scene, entity2.position);
-                
+
                 if (screenPos1 && screenPos2) {
                   // const screenDistance = Math.sqrt( // Unused
                   //   Math.pow(screenPos1.x - screenPos2.x, 2) +
                   //   Math.pow(screenPos1.y - screenPos2.y, 2)
                   // );
-                  
+
                 }
               }
             }
-            
+
             // Try to access the internal clustering state
             try {
               // Check if clustering is actually working by examining the clustering object
-              
+
               // Check if there are any existing clusters (using a safer approach)
               try {
                 const clustering = dataSourceRef.current.clustering as unknown as Record<string, unknown> | undefined;
@@ -1470,19 +1470,19 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
                 }
               } catch (error) {
               }
-              
+
               // Force a cluster update by temporarily disabling and re-enabling
               dataSourceRef.current.clustering.enabled = false;
               viewerRef.current.scene.requestRender();
-              
+
               setTimeout(() => {
                 if (dataSourceRef.current && viewerRef.current) {
                   dataSourceRef.current.clustering.pixelRange = 90;
                   dataSourceRef.current.clustering.minimumClusterSize = 3;
                   dataSourceRef.current.clustering.enabled = true;
                   viewerRef.current.scene.requestRender();
-                  
-                  
+
+
                   // Check again after forcing regeneration
                   setTimeout(() => {
                     let visibleAfterForce = 0;
@@ -1498,7 +1498,7 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
                         }
                       }
                     }
-                    
+
                     // Check if clustering parameters are still correct
                     if (dataSourceRef.current && dataSourceRef.current.clustering) {
                     }
@@ -1510,19 +1510,19 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
           }
         }, 1000);
       }
-      
+
       // Fly back to the stored position from spin and zoom
-      
+
       viewerRef.current.camera.flyTo({
         destination: spinAndZoomFinalPositionRef.current.destination,
         orientation: spinAndZoomFinalPositionRef.current.orientation,
         duration: 2.0,
         complete: () => {
-          
+
           // Check clustering state after camera movement completes
           setTimeout(() => {
             if (dataSourceRef.current && viewerRef.current) {
-              
+
               // Check entity visibility after camera movement
               const entities = dataSourceRef.current.entities.values;
               let visibleEntities = 0;
@@ -1538,7 +1538,7 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
                   }
                 }
               }
-              
+
               // Force one more clustering update after camera movement
               dataSourceRef.current.clustering.enabled = false;
               setTimeout(() => {
@@ -1551,7 +1551,7 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
               }, 50);
             }
           }, 500); // Wait 500ms after camera movement completes
-          
+
           // Store the final position for "go back to map" functionality
           if (viewerRef.current) {
             spinAndZoomFinalPositionRef.current = {
@@ -1565,10 +1565,10 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
           }
         }
       });
-      
-      
+
+
     } else {
-      
+
       // Fallback: Calculate positions of all landmarks for bounding sphere
       const positions = entityRefs.current.map(entity => {
         if (entity.properties) {
@@ -1579,13 +1579,13 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
         }
         return Cesium.Cartesian3.fromDegrees(0, 0, 0);
       });
-      
+
       const boundingSphere = Cesium.BoundingSphere.fromPoints(positions);
-      
+
       // Fly back to the overview of all landmarks
       viewerRef.current.camera.flyToBoundingSphere(boundingSphere, {
         duration: 2.0,
-        offset: new Cesium.HeadingPitchRange(0, -Math.PI/2, boundingSphere.radius * 3),
+        offset: new Cesium.HeadingPitchRange(0, -Math.PI / 2, boundingSphere.radius * 3),
         complete: () => {
           // Double-check that rotation stays stopped after the fly completes
           rotatingRef.current = false;
@@ -1597,7 +1597,7 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
           }
         }
       });
-      
+
     }
   }, [entitiesReady]);
 
@@ -1624,57 +1624,57 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
     setShowOverlay(true);
     setShowReset(false);
     setShowFlyThroughEntity(false);
-    
+
     // Clear the captured logo size to prevent re-use
     setCapturedLogoSize({ width: 0, height: 0 });
-    
+
     // Clear the stored spin and zoom position
     spinAndZoomFinalPositionRef.current = null;
-    
+
     // Clear the stored clustering parameters
     spinAndZoomClusteringParamsRef.current = null;
-    
+
     // Clear the clustering restore time
     clusteringRestoreTimeRef.current = null;
-    
+
     // Clean up all fly-through primitives from the scene
     if (viewerRef.current && viewerRef.current.scene) {
       const scene = viewerRef.current.scene;
-      
+
       // Find and remove all fly-through primitives
       for (let i = scene.primitives.length - 1; i >= 0; i--) {
         const primitive = scene.primitives.get(i);
-        if (primitive && 
-            primitive.appearance && 
-            primitive.appearance.material && 
-            primitive.appearance.material.uniforms && 
-            primitive.appearance.material.uniforms.image && 
-            primitive.appearance.material.uniforms.image.indexOf('tghMainLogo.svg') !== -1) {
+        if (primitive &&
+          primitive.appearance &&
+          primitive.appearance.material &&
+          primitive.appearance.material.uniforms &&
+          primitive.appearance.material.uniforms.image &&
+          primitive.appearance.material.uniforms.image.indexOf('tghMainLogo.svg') !== -1) {
           scene.primitives.remove(primitive);
         }
       }
-      
+
       // Also clear the ref
       flyThroughPrimitiveRef.current = null;
     }
-    
+
     // Reset clustering parameters to overview mode after camera reset
     if (dataSourceRef.current && viewerRef.current) {
       const canvas = viewerRef.current.scene.canvas;
       const clusteringParams = calculateClusteringParameters(canvas, 1920, true); // Force overview mode
-      
+
       dataSourceRef.current.clustering.pixelRange = clusteringParams.pixelRange;
       dataSourceRef.current.clustering.minimumClusterSize = clusteringParams.minimumClusterSize;
-      
+
     }
-    
+
     // Force logo size recalculation after reset
     setTimeout(() => {
       if (viewerRef.current) {
         // Logo size will be recalculated by the useOverlayLogoMeasurement hook
       }
     }, 100);
-    
+
     animationFrameRef.current = requestAnimationFrame(animate);
   };
 
@@ -1702,26 +1702,26 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
   // Show error state if Cesium failed to initialize
   if (cesiumError) {
     return (
-      <div style={{ 
-        position: 'fixed', 
-        inset: 0, 
-        width: '100vw', 
-        height: '100vh', 
-        display: 'flex', 
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center', 
-        justifyContent: 'center', 
+        alignItems: 'center',
+        justifyContent: 'center',
         backgroundColor: '#000',
         color: '#fff',
         fontSize: '18px',
-        zIndex: 1 
+        zIndex: 1
       }}>
         <div style={{ marginBottom: '16px' }}>Cesium initialization failed:</div>
         <div style={{ fontSize: '14px', color: '#ff6b6b', maxWidth: '80%', textAlign: 'center' }}>
           {cesiumError}
         </div>
-        <button 
-          onClick={() => window.location.reload()} 
+        <button
+          onClick={() => window.location.reload()}
           style={{
             marginTop: '20px',
             padding: `${getScaledPadding(12)}px ${getScaledPadding(24)}px`,
@@ -1742,26 +1742,26 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
   // Show error state if landmarks failed to load
   if (landmarksError) {
     return (
-      <div style={{ 
-        position: 'fixed', 
-        inset: 0, 
-        width: '100vw', 
-        height: '100vh', 
-        display: 'flex', 
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center', 
-        justifyContent: 'center', 
+        alignItems: 'center',
+        justifyContent: 'center',
         backgroundColor: '#000',
         color: '#fff',
         fontSize: '18px',
-        zIndex: 1 
+        zIndex: 1
       }}>
         <div style={{ marginBottom: '16px' }}>Error loading landmarks:</div>
         <div style={{ fontSize: '14px', color: '#ff6b6b', maxWidth: '80%', textAlign: 'center' }}>
           {landmarksError}
         </div>
-        <button 
-          onClick={() => window.location.reload()} 
+        <button
+          onClick={() => window.location.reload()}
           style={{
             marginTop: '20px',
             padding: `${getScaledPadding(12)}px ${getScaledPadding(24)}px`,
@@ -1793,7 +1793,7 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
         }}
         className="cesium-globe-container"
       />
-      {showOverlay && (
+      {showOverlay && !showLoadingIndicator && (
         <div
           style={{
             position: 'fixed',
@@ -1847,6 +1847,18 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
             Enter Globe
           </button>
           <style>{`
+            /* Fade-in animation */
+            .enter-globe-btn {
+              opacity: 0;
+              animation: fadeIn 2s ease-in-out 4s forwards;
+            }
+
+            @keyframes fadeIn {
+              to {
+                opacity: 1;
+              }
+            }  
+
             /* Hover/focus states for the overlay button */
             .cesium-overlay-button:hover {
               transform: translateZ(0) scale(1.03) !important;
@@ -1945,10 +1957,14 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds }: Cesium
         open={modalOpen && activeLandmarkIdx !== null}
         contentUrl={activeLandmarkIdx !== null ? LANDMARKS[activeLandmarkIdx].contentUrl || '' : ''}
         landmarkName={activeLandmarkIdx !== null ? LANDMARKS[activeLandmarkIdx].name : ''}
-        landmarkSubtitle={''} 
+        landmarkSubtitle={''}
         landmarkContent={''}
-        onClose={() => { 
-          setModalOpen(false); 
+        description={activeLandmarkIdx !== null ? LANDMARKS[activeLandmarkIdx].description : undefined}
+        images={activeLandmarkIdx !== null ? LANDMARKS[activeLandmarkIdx].images : undefined}
+        links={activeLandmarkIdx !== null ? LANDMARKS[activeLandmarkIdx].links : undefined}
+        videos={activeLandmarkIdx !== null ? LANDMARKS[activeLandmarkIdx].videos : undefined}
+        onClose={() => {
+          setModalOpen(false);
           setActiveLandmarkIdx(null);
           handleZoomBackOut();
         }}

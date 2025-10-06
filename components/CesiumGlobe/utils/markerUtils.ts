@@ -95,57 +95,95 @@ export async function createMarkerImage({
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d', { alpha: true })!;
 
-  // 2. Calculate dynamic width and text layout
-  const logoWidth = 70;
-  const leftPadding = 18;
-  const textLeftPadding = 12;
-  const textRightPadding = 6;
-  const playButtonWidth = 43.2;
-  const rightPadding = 12;
-  const contentWidth = leftPadding + logoWidth + textLeftPadding + textWidth + textRightPadding + playButtonWidth + rightPadding;
-  const dynamicWidth = contentWidth;
+  // 2. APPLE MAPS STYLE PILL - Calculate dynamic width and layout
+  const iconSize = 20; // Small compact icon
+  const leftPadding = 14;
+  const iconTextGap = 8;
+  const rightPadding = 14;
+  const dynamicWidth = leftPadding + iconSize + iconTextGap + textWidth + rightPadding;
 
-  // Add padding for stroke width to prevent clipping
-  const strokeWidth = 3;
-  const padding = strokeWidth / 2; // 1.5px padding on each side
-  const verticalPadding = strokeWidth; // Extra padding for top/bottom to prevent clipping on curved edges
-  
-  // 3. Generate SVG string with dynamic width and static height
-  const staticHeight = 110; // Increased height to accommodate the pointer tip at 107.497px
-  const adjustedWidth = dynamicWidth + strokeWidth;
+  // Perfect pill capsule - height must equal border radius for perfect pill shape
+  const pillHeight = 44;
+  const shadowPadding = 10; // Extra space for soft shadow
+  const borderRadius = pillHeight / 2; // Perfect pill = height / 2
+
+  // 3. Generate SVG string with Apple Maps style design
+  const adjustedWidth = dynamicWidth + (shadowPadding * 2);
+  const adjustedHeight = pillHeight + (shadowPadding * 2);
+
   const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${adjustedWidth}" height="${staticHeight}" fill="none" preserveAspectRatio="xMidYMid meet">
+    <svg xmlns="http://www.w3.org/2000/svg" width="${adjustedWidth}" height="${adjustedHeight}" fill="none" preserveAspectRatio="xMidYMid meet">
       <defs>
-        <filter id="blurBackground" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="4" result="blur"/>
-          <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.3 0" result="blurred"/>
-        </filter>
-        <filter id="markerShadow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="4" result="blur"/>
-          <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.5 0" result="glow"/>
+        <!-- Apple Maps style shadow -->
+        <filter id="appleShadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+          <feOffset dx="0" dy="2" result="offsetblur"/>
+          <feComponentTransfer>
+            <feFuncA type="linear" slope="0.2"/>
+          </feComponentTransfer>
+          <feMerge>
+            <feMergeNode/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
         </filter>
       </defs>
-      <g transform="translate(${padding}, ${padding + verticalPadding / 2})">
-        <!-- Background fill to prevent border bleeding -->
-        <path
-          d="M${dynamicWidth - 39} 0C${dynamicWidth - 17.237} 0 ${dynamicWidth} 17.237 ${dynamicWidth} 39C${dynamicWidth} 60.763 ${dynamicWidth - 17.237} 78 ${dynamicWidth - 39} 78H62.5527L43.3643 107.497L21.6553 74.127C8.83464 67.8785 0 54.7218 0 39C0 17.237 17.237 0 39 0H${dynamicWidth - 39}Z"
-          fill="${color}"
-          fill-opacity="1.0"
+
+      <g transform="translate(${shadowPadding}, ${shadowPadding})">
+        <!-- Solid white pill background -->
+        <rect
+          x="0"
+          y="0"
+          width="${dynamicWidth}"
+          height="${pillHeight}"
+          rx="${borderRadius}"
+          ry="${borderRadius}"
+          fill="rgba(255,255,255,0.95)"
+          filter="url(#appleShadow)"
         />
-        <!-- Border layer with pointer -->
-        <path
-          d="M${dynamicWidth - 39} 0C${dynamicWidth - 17.237} 0 ${dynamicWidth} 17.237 ${dynamicWidth} 39C${dynamicWidth} 60.763 ${dynamicWidth - 17.237} 78 ${dynamicWidth - 39} 78H62.5527L43.3643 107.497L21.6553 74.127C8.83464 67.8785 0 54.7218 0 39C0 17.237 17.237 0 39 0H${dynamicWidth - 39}Z"
+
+        <!-- Light gray border for definition -->
+        <rect
+          x="0"
+          y="0"
+          width="${dynamicWidth}"
+          height="${pillHeight}"
+          rx="${borderRadius}"
+          ry="${borderRadius}"
           fill="none"
-          stroke="${borderColor}"
-          stroke-width="${strokeWidth}"
-          stroke-linejoin="round"
-          stroke-linecap="round"
+          stroke="rgba(0,0,0,0.1)"
+          stroke-width="0.5"
         />
-        <image x="${leftPadding + 5}" y="25%" width="70" height="32" href="${logoDataUrl}"/>
-        <text x="${leftPadding + 5 + logoWidth + textLeftPadding}" y="38%" font-family="Roboto Condensed, sans-serif" font-weight="bold" font-size="${fontSize}" fill="#fff" text-anchor="start" dominant-baseline="middle">${escapeHtml(text)}</text>
-        <g >
-          <path transform="translate(${leftPadding + 5 + logoWidth + textLeftPadding + textWidth + 12}, 24)" d="M16.0004 0.400024C7.0718 0.400024 0.400391 7.0714 0.400391 16C0.400391 24.9286 7.0718 31.6 16.0004 31.6C24.929 31.6 31.6004 24.9286 31.6004 16C31.6004 7.0714 24.929 0.400024 16.0004 0.400024ZM22.5476 16.7236L12.8532 22.6292C12.1638 23.027 11.6004 22.7012 11.6004 21.9056V10.0926C11.6004 9.297 12.1638 8.9712 12.8532 9.369L22.5476 15.2746C23.237 15.6742 23.237 16.3258 22.5476 16.7236Z" fill="white"/>
-        </g>
+
+        <!-- Blue icon circle (brand color) -->
+        <circle
+          cx="${leftPadding + iconSize / 2}"
+          cy="${pillHeight / 2}"
+          r="${iconSize / 2}"
+          fill="#3b82f6"
+        />
+
+        <!-- Icon logo if provided -->
+        <image
+          x="${leftPadding + (iconSize - 16) / 2}"
+          y="${(pillHeight - 16) / 2}"
+          width="16"
+          height="16"
+          href="${logoDataUrl}"
+          opacity="1"
+        />
+
+        <!-- Dark text for high contrast -->
+        <text
+          x="${leftPadding + iconSize + iconTextGap}"
+          y="${pillHeight / 2}"
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif"
+          font-weight="600"
+          font-size="${fontSize - 3}"
+          fill="rgba(0,0,0,0.85)"
+          text-anchor="start"
+          dominant-baseline="middle"
+          letter-spacing="-0.2"
+        >${escapeHtml(text)}</text>
       </g>
     </svg>
   `
@@ -163,8 +201,8 @@ export async function createMarkerImage({
   console.log('🎨 Created blob URL for', logoUrl || 'no logo', ':', url.substring(0, 50));
 
   // 3. Draw SVG onto canvas with timeout and error handling
-  canvas.width = adjustedWidth; // Set canvas width to match the dynamic marker width
-  canvas.height = 110; // Full height to accommodate the pointer tip at 107.497px
+  canvas.width = adjustedWidth;
+  canvas.height = adjustedHeight;
 
   await new Promise<void>((resolve, reject) => {
     const img = new window.Image();
@@ -175,14 +213,14 @@ export async function createMarkerImage({
         settled = true;
       }
     };
-    
-    console.log('🎨 Starting image load for', logoUrl || 'no logo', 'with URL:', url.substring(0, 50));
-    
+
+    console.log('🎨 Starting Apple Maps style marker load for', logoUrl || 'no logo');
+
     img.onload = () => {
-      console.log('🎨 Image loaded successfully for', logoUrl || 'no logo');
+      console.log('✅ Apple Maps style marker loaded successfully for', logoUrl || 'no logo');
       // Clear canvas and draw the SVG at natural size
-      ctx.clearRect(0, 0, adjustedWidth, 110);
-      ctx.drawImage(img, 0, 0, adjustedWidth, 110);
+      ctx.clearRect(0, 0, adjustedWidth, adjustedHeight);
+      ctx.drawImage(img, 0, 0, adjustedWidth, adjustedHeight);
       cleanup();
       resolve();
     };
@@ -191,10 +229,9 @@ export async function createMarkerImage({
       console.error('❌ SVG image failed to load for', logoUrl || 'no logo', 'Error:', e);
       reject(new Error('SVG image failed to load'));
     };
-    
+
     img.src = url;
-    console.log('🎨 Set img.src for', logoUrl || 'no logo');
-    
+
     setTimeout(() => {
       if (!settled) {
         cleanup();
@@ -221,95 +258,123 @@ export async function createClusterMarkerImage({
   width?: number;
   fontSize?: number;
 }): Promise<string> {
-  console.log('🎨 Creating cluster marker with color:', color, 'borderColor:', borderColor);
+  console.log('🎨 Creating Apple Maps cluster marker with color:', color);
   // Ensure fonts are loaded before measuring text
   await preloadFonts();
 
-  
-  // Add padding for stroke width to prevent clipping
-  const strokeWidth = 3;
-  const padding = strokeWidth / 2; // 1.5px padding on each side
-  const verticalPadding = strokeWidth; // Extra padding for top/bottom to prevent clipping on curved edges
-
-  // 2. Calculate dynamic width and text layout
+  // 2. APPLE MAPS STYLE CLUSTER - Calculate dynamic width
   let dynamicWidth = width;
   let calculatedFontSize = fontSize;
-  
+
   // Calculate dynamic width and font size based on text length
   if (text) {
-    const leftPadding = 28;
-    const rightPadding = 28;
+    const leftPadding = 32;
+    const rightPadding = 32;
     const availableTextWidth = 256 - leftPadding - rightPadding;
-    
+
     // Use the helper function to measure text width with font loading check
-    const actualTextWidth = measureTextWidth(text, fontSize, 'Arial, sans-serif');
-    
+    const actualTextWidth = measureTextWidth(text, fontSize, 'Inter, -apple-system, system-ui, sans-serif');
+
     // Calculate optimal font size to fit text in available space
     if (actualTextWidth > availableTextWidth) {
       const scaleFactor = availableTextWidth / actualTextWidth;
       calculatedFontSize = Math.max(fontSize * 0.7, fontSize * scaleFactor);
-      
+
       // Recalculate with adjusted font size
-      const adjustedTextWidth = measureTextWidth(text, calculatedFontSize, 'Arial, sans-serif');
+      const adjustedTextWidth = measureTextWidth(text, calculatedFontSize, 'Inter, -apple-system, system-ui, sans-serif');
       const totalWidth = leftPadding + adjustedTextWidth + rightPadding;
-      const minWidth = 200;
+      const minWidth = 160;
       dynamicWidth = Math.max(minWidth, totalWidth);
     } else {
       const totalWidth = leftPadding + actualTextWidth + rightPadding;
-      const minWidth = 200;
+      const minWidth = 160;
       dynamicWidth = Math.max(minWidth, totalWidth);
     }
   }
-  
-  // 3. Generate SVG string with dynamic width and static height
-  const staticHeight = 110; // Height from top to bottom pointer (increased to match individual markers)
-  const adjustedWidth = dynamicWidth + strokeWidth;
-  const adjustedHeight = staticHeight; // No extra padding to keep exact height
+
+  // Perfect pill for clusters - slightly larger
+  const pillHeight = 50; // Slightly taller for clusters
+  const shadowPadding = 12; // Extra space for enhanced shadow
+  const borderRadius = pillHeight / 2; // Perfect pill
+
+  // 3. Generate SVG string with pill design
+  const adjustedWidth = dynamicWidth + (shadowPadding * 2);
+  const adjustedHeight = pillHeight + (shadowPadding * 2);
   
   const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${adjustedWidth}" height="${adjustedHeight}"  fill="none">
+    <svg xmlns="http://www.w3.org/2000/svg" width="${adjustedWidth}" height="${adjustedHeight}" fill="none" preserveAspectRatio="xMidYMid meet">
       <defs>
-        <filter id="clusterBlurBackground" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="4" result="blur"/>
-          <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.3 0" result="blurred"/>
-        </filter>
-        <filter id="clusterMarkerShadow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="4" result="blur"/>
-          <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.5 0" result="glow"/>
+        <!-- Enhanced cluster shadow -->
+        <filter id="clusterAppleShadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+          <feOffset dx="0" dy="3" result="offsetblur"/>
+          <feComponentTransfer>
+            <feFuncA type="linear" slope="0.25"/>
+          </feComponentTransfer>
+          <feMerge>
+            <feMergeNode/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
         </filter>
       </defs>
-      <g transform="translate(${padding}, ${padding + verticalPadding / 2})">
-        <!-- Glow effect (behind everything) -->
-        <path
-          d="M${dynamicWidth - 39} 0C${dynamicWidth - 17.237} 0 ${dynamicWidth} 17.237 ${dynamicWidth} 39C${dynamicWidth} 60.763 ${dynamicWidth - 17.237} 78 ${dynamicWidth - 39} 78H62.5527L43.3643 107.497L21.6553 74.127C8.83464 67.8785 0 54.7218 0 39C0 17.237 17.237 0 39 0H${dynamicWidth - 39}Z"
-          fill="#FCF060"
-          fill-opacity="0.5"
-          filter="url(#clusterMarkerShadow)"
+
+      <g transform="translate(${shadowPadding}, ${shadowPadding})">
+        <!-- Solid white pill shape for cluster -->
+        <rect
+          x="0"
+          y="0"
+          width="${dynamicWidth}"
+          height="${pillHeight}"
+          rx="${borderRadius}"
+          ry="${borderRadius}"
+          fill="rgba(255,255,255,0.95)"
+          filter="url(#clusterAppleShadow)"
         />
-        <!-- Background fill to prevent border bleeding -->
-        <path
-          d="M${dynamicWidth - 39} 0C${dynamicWidth - 17.237} 0 ${dynamicWidth} 17.237 ${dynamicWidth} 39C${dynamicWidth} 60.763 ${dynamicWidth - 17.237} 78 ${dynamicWidth - 39} 78H62.5527L43.3643 107.497L21.6553 74.127C8.83464 67.8785 0 54.7218 0 39C0 17.237 17.237 0 39 0H${dynamicWidth - 39}Z"
-          fill="${color}"
-          fill-opacity="1.0"
-        />
-        <!-- Border layer -->
-        <path
-          d="M${dynamicWidth - 39} 0C${dynamicWidth - 17.237} 0 ${dynamicWidth} 17.237 ${dynamicWidth} 39C${dynamicWidth} 60.763 ${dynamicWidth - 17.237} 78 ${dynamicWidth - 39} 78H62.5527L43.3643 107.497L21.6553 74.127C8.83464 67.8785 0 54.7218 0 39C0 17.237 17.237 0 39 0H${dynamicWidth - 39}Z"
+
+        <!-- Light gray border -->
+        <rect
+          x="0"
+          y="0"
+          width="${dynamicWidth}"
+          height="${pillHeight}"
+          rx="${borderRadius}"
+          ry="${borderRadius}"
           fill="none"
-          stroke="${borderColor}"
-          stroke-width="${strokeWidth}"
-          stroke-linejoin="round"
-          stroke-linecap="round"
+          stroke="rgba(0,0,0,0.12)"
+          stroke-width="0.5"
         />
-        <text 
-          x="${dynamicWidth / 2}" 
-          y="39" 
-          font-family="Arial, sans-serif" 
-          font-weight="bold" 
-          font-size="${calculatedFontSize}" 
-          fill="#fff" 
-          text-anchor="middle" 
+
+        <!-- Count badge (left side) - red/orange for clusters like Apple Maps -->
+        <circle
+          cx="18"
+          cy="${pillHeight / 2}"
+          r="12"
+          fill="#ef4444"
+        />
+
+        <!-- Badge number in white -->
+        <text
+          x="18"
+          y="${pillHeight / 2}"
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif"
+          font-weight="700"
+          font-size="13"
+          fill="#fff"
+          text-anchor="middle"
           dominant-baseline="middle"
+        >${escapeHtml(text.split(' ')[0])}</text>
+
+        <!-- Cluster text in dark for high contrast -->
+        <text
+          x="${dynamicWidth / 2}"
+          y="${pillHeight / 2}"
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif"
+          font-weight="600"
+          font-size="${calculatedFontSize}"
+          fill="rgba(0,0,0,0.85)"
+          text-anchor="middle"
+          dominant-baseline="middle"
+          letter-spacing="-0.2"
         >${escapeHtml(text)}</text>
       </g>
     </svg>
@@ -324,7 +389,7 @@ export async function createClusterMarkerImage({
   // 2. Convert SVG string to data URL
   const svgBlob = new Blob([cleanSvg], { type: 'image/svg+xml' });
   const url = URL.createObjectURL(svgBlob);
-  // 3. Draw SVG onto canvas with timeout and error handling
+  // 4. Draw SVG onto canvas with timeout and error handling
   const canvas = document.createElement('canvas');
   let ctx = canvas.getContext('2d', { alpha: true })!;
 
