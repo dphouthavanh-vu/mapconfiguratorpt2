@@ -30,9 +30,17 @@ export default function MapsPage() {
     try {
       const response = await fetch('/api/maps');
       const data = await response.json();
-      setMaps(data);
+
+      // Check if the response is an error object
+      if (data.error || !Array.isArray(data)) {
+        console.error('Error fetching maps:', data.error || 'Invalid response');
+        setMaps([]); // Set empty array to prevent map error
+      } else {
+        setMaps(data);
+      }
     } catch (error) {
       console.error('Error fetching maps:', error);
+      setMaps([]); // Set empty array to prevent map error
     } finally {
       setLoading(false);
     }
