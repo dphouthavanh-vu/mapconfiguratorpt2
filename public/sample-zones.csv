@@ -1,0 +1,11 @@
+Name,Address,Description,Latitude,Longitude,Type
+"Central Park","Central Park, New York, NY 10024","Large public park in the heart of Manhattan with lakes, meadows, and recreational facilities",40.7829,-73.9654,point
+"Times Square","Times Square, Manhattan, NY 10036","Major commercial intersection and tourist destination known for bright lights and Broadway theaters",40.7580,-73.9855,point
+"Empire State Building","20 W 34th St, New York, NY 10001","Iconic 102-story Art Deco skyscraper and popular observation deck",40.7484,-73.9857,point
+"Brooklyn Bridge","Brooklyn Bridge, New York, NY 10038","Historic suspension bridge connecting Manhattan and Brooklyn",40.7061,-73.9969,point
+"Statue of Liberty","Liberty Island, New York, NY 10004","Symbol of freedom and democracy, gift from France in 1886",40.6892,-74.0445,point
+"One World Trade Center","285 Fulton St, New York, NY 10007","Tallest building in NYC and primary building of rebuilt World Trade Center complex",40.7127,-74.0134,point
+"High Line","New York, NY 10011","Elevated linear park built on a former railway line on Manhattan's West Side",40.7480,-74.0048,point
+"Madison Square Garden","4 Pennsylvania Plaza, New York, NY 10001","Multi-purpose indoor arena and home to the Knicks and Rangers",40.7505,-73.9934,point
+"Museum of Modern Art","11 W 53rd St, New York, NY 10019","One of the most influential museums of modern art in the world",40.7614,-73.9776,point
+"Grand Central Terminal","89 E 42nd St, New York, NY 10017","Historic train terminal and architectural landmark",40.7527,-73.9772,point

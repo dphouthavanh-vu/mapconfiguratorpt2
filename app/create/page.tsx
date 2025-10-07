@@ -6,6 +6,7 @@ import CanvasDefinition from '@/components/canvas-definition';
 import BlueprintUpload from '@/components/blueprint-upload';
 import ZoneEditor from '@/components/zone-editor';
 import { GeographicBounds, CanvasConfig } from '@/lib/types';
+import { GeocodedZone } from '@/lib/csv-importer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,6 +28,7 @@ export default function CreateMapPage() {
   const [useBaseMap, setUseBaseMap] = useState(false);
   const [mapImageUrl, setMapImageUrl] = useState<string | null>(null);
   const [blueprintUrl, setBlueprintUrl] = useState<string | null>(null);
+  const [importedZones, setImportedZones] = useState<GeocodedZone[]>([]);
   const [canvasConfig, setCanvasConfig] = useState<CanvasConfig>({
     width: 800,
     height: 600,
@@ -41,10 +43,14 @@ export default function CreateMapPage() {
     setCurrentStep('canvas');
   };
 
-  const handleCanvasComplete = (bounds: GeographicBounds | null, useMap: boolean, mapImage?: string) => {
+  const handleCanvasComplete = (bounds: GeographicBounds | null, useMap: boolean, mapImage?: string, zones?: GeocodedZone[]) => {
     setGeoBounds(bounds);
     setUseBaseMap(useMap);
     setMapImageUrl(mapImage || null);
+    if (zones && zones.length > 0) {
+      setImportedZones(zones);
+      console.log('[Create] Received imported zones from Canvas:', zones.length);
+    }
     setCurrentStep('blueprint');
   };
 
@@ -258,6 +264,7 @@ export default function CreateMapPage() {
             geoBounds={geoBounds}
             useBaseMap={useBaseMap}
             onSave={handleSaveMap}
+            importedZones={importedZones}
           />
         </div>
       )}

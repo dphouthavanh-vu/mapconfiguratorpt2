@@ -869,16 +869,32 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds, onBackTo
     setShowReset(true);
 
     // Calculate the center of all landmarks first
-    const positions = entityRefs.current.map(entity => {
+    const positions = entityRefs.current.map((entity, index) => {
       if (entity.properties) {
         const lon = entity.properties.lon?.getValue();
         const lat = entity.properties.lat?.getValue();
         const height = entity.properties.height?.getValue() ?? 0;
+
+        console.log(`[SmartAnimateRotateToShow] Entity ${index} position:`, { lon, lat, height });
+
+        // Validate coordinates
+        if (!isFinite(lon) || !isFinite(lat) || lon < -180 || lon > 180 || lat < -90 || lat > 90) {
+          console.warn(`[SmartAnimateRotateToShow] Invalid coordinates for entity ${index}:`, { lon, lat });
+          return null;
+        }
+
         return Cesium.Cartesian3.fromDegrees(lon, lat, height);
       }
-      return Cesium.Cartesian3.fromDegrees(0, 0, 0);
-    });
+      console.warn(`[SmartAnimateRotateToShow] Entity ${index} has no properties`);
+      return null;
+    }).filter(pos => pos !== null);
 
+    if (positions.length === 0) {
+      console.error('[SmartAnimateRotateToShow] No valid positions found for entities');
+      return;
+    }
+
+    console.log(`[SmartAnimateRotateToShow] Creating bounding sphere from ${positions.length} positions`);
     const boundingSphere = Cesium.BoundingSphere.fromPoints(positions);
     const centerCartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(boundingSphere.center);
     const targetLon = Cesium.Math.toDegrees(centerCartographic.longitude);
@@ -1574,15 +1590,28 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds, onBackTo
     } else {
 
       // Fallback: Calculate positions of all landmarks for bounding sphere
-      const positions = entityRefs.current.map(entity => {
+      const positions = entityRefs.current.map((entity, index) => {
         if (entity.properties) {
           const lon = entity.properties.lon?.getValue();
           const lat = entity.properties.lat?.getValue();
           const height = entity.properties.height?.getValue() ?? 0;
+
+          // Validate coordinates
+          if (!isFinite(lon) || !isFinite(lat) || lon < -180 || lon > 180 || lat < -90 || lat > 90) {
+            console.warn(`[handleZoomBackOut] Invalid coordinates for entity ${index}:`, { lon, lat });
+            return null;
+          }
+
           return Cesium.Cartesian3.fromDegrees(lon, lat, height);
         }
-        return Cesium.Cartesian3.fromDegrees(0, 0, 0);
-      });
+        console.warn(`[handleZoomBackOut] Entity ${index} has no properties`);
+        return null;
+      }).filter(pos => pos !== null);
+
+      if (positions.length === 0) {
+        console.error('[handleZoomBackOut] No valid positions found for entities');
+        return;
+      }
 
       const boundingSphere = Cesium.BoundingSphere.fromPoints(positions);
 

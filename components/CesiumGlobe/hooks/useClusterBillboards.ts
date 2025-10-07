@@ -96,7 +96,10 @@ export function setupClusterBillboards(
           // Enable depth testing to prevent border bleeding through overlapping markers
           cluster.billboard.disableDepthTestDistance = 0.0;
           // Set height reference to ensure proper depth ordering
-          cluster.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
+          // Only set height reference if scene is available to avoid errors
+          if (_viewer && _viewer.scene) {
+            cluster.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
+          }
           cluster.billboard.show = true;
           cluster.label.show = false;
         } catch (error) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Stage, Layer, Image as KonvaImage, Circle, Rect, Line } from 'react-konva';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ZoneType, ZoneCoordinates, ZoneContent, PointCoordinates, RectangleCoordinates, CircleCoordinates, GeographicBounds } from '@/lib/types';
+import { Upload, FileText } from 'lucide-react';
 import useImage from 'use-image';
+import CSVImportDialog from '@/components/csv-import-dialog';
+import { GeocodedZone } from '@/lib/csv-importer';
 
 interface Zone {
   id: string;
@@ -27,14 +30,16 @@ interface ZoneEditorProps {
   geoBounds?: GeographicBounds | null;
   useBaseMap?: boolean;
   onSave: (zones: Zone[]) => void;
+  importedZones?: GeocodedZone[];
 }
 
-export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBounds, useBaseMap, onSave }: ZoneEditorProps) {
+export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBounds, useBaseMap, onSave, importedZones }: ZoneEditorProps) {
   const [zones, setZones] = useState<Zone[]>([]);
   const [selectedZoneType, setSelectedZoneType] = useState<ZoneType>('point');
   const [placementMode, setPlacementMode] = useState<'click' | 'manual'>('click');
   const [editingZone, setEditingZone] = useState<Zone | null>(null);
   const [showContentDialog, setShowContentDialog] = useState(false);
+  const [showCsvImportDialog, setShowCsvImportDialog] = useState(false);
   const [image] = useImage(imageUrl || '');
 
   // Manual coordinate inputs
@@ -54,6 +59,20 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
     videos: [],
     links: [],
   });
+
+  // Initialize with imported zones if provided
+  useEffect(() => {
+    if (importedZones && importedZones.length > 0) {
+      const convertedZones: Zone[] = importedZones.map(geoZone => ({
+        id: geoZone.id,
+        type: geoZone.type,
+        coordinates: geoZone.coordinates,
+        content: geoZone.content,
+      }));
+      setZones(convertedZones);
+      console.log('[ZoneEditor] Initialized with imported zones:', convertedZones.length);
+    }
+  }, [importedZones]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -161,6 +180,18 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
 
   const handleDeleteZone = (id: string) => {
     setZones(zones.filter((z) => z.id !== id));
+  };
+
+  const handleCsvImport = (importedZones: GeocodedZone[]) => {
+    const newZones: Zone[] = importedZones.map(geoZone => ({
+      id: geoZone.id,
+      type: geoZone.type,
+      coordinates: geoZone.coordinates,
+      content: geoZone.content,
+    }));
+
+    setZones(prevZones => [...prevZones, ...newZones]);
+    setShowCsvImportDialog(false);
   };
 
   const renderZone = (zone: Zone) => {
@@ -321,6 +352,20 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
                 </Button>
               </TabsContent>
             </Tabs>
+
+            <div className="mt-4 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setShowCsvImportDialog(true)}
+                className="w-full"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Import from CSV
+              </Button>
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                Bulk import zones from a CSV file with names, addresses, and descriptions
+              </p>
+            </div>
           </CardContent>
         </Card>
 
@@ -515,6 +560,16 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* CSV Import Dialog */}
+      <CSVImportDialog
+        open={showCsvImportDialog}
+        onClose={() => setShowCsvImportDialog(false)}
+        onImport={handleCsvImport}
+        canvasWidth={canvasWidth}
+        canvasHeight={canvasHeight}
+        geoBounds={geoBounds}
+      />
     </div>
   );
 }

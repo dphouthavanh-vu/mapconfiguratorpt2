@@ -499,14 +499,34 @@ export function useCesiumViewerSetup({
     // Clear previous entities
     dataSourceRef.current.entities.removeAll();
     entityRefs.current = [];
-    
+
+    console.log(`[createEntities] Creating entities for ${LANDMARKS.length} landmarks`);
+
     LANDMARKS.forEach((landmark, i) => {
-      
+      console.log(`[createEntities] Landmark ${i}:`, {
+        name: landmark.name,
+        lon: landmark.lon,
+        lat: landmark.lat,
+        height: landmark.height
+      });
+
       if (!markerImages[i]) {
         console.error(`❌ Cannot create entity ${i} - missing marker image`);
         return; // Skip this entity
       }
-      
+
+      // Validate coordinates
+      if (!isFinite(landmark.lon) || !isFinite(landmark.lat) ||
+          landmark.lon < -180 || landmark.lon > 180 ||
+          landmark.lat < -90 || landmark.lat > 90) {
+        console.error(`❌ Invalid coordinates for landmark ${i}:`, {
+          name: landmark.name,
+          lon: landmark.lon,
+          lat: landmark.lat
+        });
+        return; // Skip this entity
+      }
+
       try {
                 const entity = dataSourceRef.current!.entities.add({
           position: Cesium.Cartesian3.fromDegrees(landmark.lon, landmark.lat, landmark.height || 0),
@@ -525,7 +545,8 @@ export function useCesiumViewerSetup({
             // Enable depth testing to prevent border bleeding through overlapping markers
             disableDepthTestDistance: 0.0,
             // Set height reference to ensure proper depth ordering
-            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+            // Only set if scene is available to avoid errors
+            heightReference: viewerRef.current?.scene ? Cesium.HeightReference.CLAMP_TO_GROUND : undefined,
           },
           name: landmark.name,
           description: 'Click to zoom!',

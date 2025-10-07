@@ -217,6 +217,7 @@ export default function MapSelectorCesium({ onBoundsSelected }: MapSelectorProps
                         outline: true,
                         outlineColor: Cesium.Color.BLUE,
                         outlineWidth: 2,
+                        height: 0, // Explicitly set height to avoid terrain clamping issues with outlines
                       },
                     });
                     setRectangleEntity(newEntity);
@@ -235,6 +236,7 @@ export default function MapSelectorCesium({ onBoundsSelected }: MapSelectorProps
                         outline: true,
                         outlineColor: Cesium.Color.BLUE,
                         outlineWidth: 2,
+                        height: 0, // Explicitly set height to avoid terrain clamping issues with outlines
                       },
                     });
                     setRectangleEntity(newEntity);
@@ -277,6 +279,7 @@ export default function MapSelectorCesium({ onBoundsSelected }: MapSelectorProps
         outline: true,
         outlineColor: Cesium.Color.BLUE,
         outlineWidth: 2,
+        height: 0, // Explicitly set height to avoid terrain clamping issues with outlines
       },
     });
 

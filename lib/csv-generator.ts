@@ -127,13 +127,26 @@ export function zonesToLandmarks(
   defaultColor: string = '#0066CC'
 ): LandmarkCSV[] {
   if (!geoBounds) {
+    console.warn('[zonesToLandmarks] No geographic bounds provided');
     return [];
   }
 
-  return zones.map((zone) => {
+  console.log('[zonesToLandmarks] Converting zones to landmarks:', {
+    zonesCount: zones.length,
+    canvasConfig,
+    geoBounds
+  });
+
+  return zones.map((zone, index) => {
     const coordinates = JSON.parse(zone.coordinates);
     const content = JSON.parse(zone.content);
     const style = zone.style ? JSON.parse(zone.style) : {};
+
+    console.log(`[zonesToLandmarks] Zone ${index}:`, {
+      type: zone.type,
+      coordinates,
+      content: content.title
+    });
 
     const { lat, lng } = zoneToGeo(
       coordinates,
@@ -142,6 +155,8 @@ export function zonesToLandmarks(
       canvasConfig.height,
       geoBounds
     );
+
+    console.log(`[zonesToLandmarks] Converted to geographic coords:`, { lat, lng });
 
     const landmark: LandmarkCSV = {
       name: content.title || 'Unnamed Zone',
