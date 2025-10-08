@@ -1,7 +1,8 @@
 .modalOverlay {
   position: fixed;
   inset: 0;
-  background: #000;
+  background: rgba(0, 0, 0, 0.5); // Semi-transparent to keep map visible
+  backdrop-filter: blur(8px); // Subtle blur for depth
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -15,7 +16,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #000;
+  background: transparent; // Transparent to show map through overlay
   min-height: 0;
   min-width: 0;
   width: 100vw;

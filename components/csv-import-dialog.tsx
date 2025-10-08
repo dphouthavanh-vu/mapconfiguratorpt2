@@ -246,6 +246,21 @@ export default function CSVImportDialog({
           </Select>
         </div>
 
+        <div>
+          <Label>Category Column</Label>
+          <Select value={mappings.categoryColumn || 'none'} onValueChange={(value) => handleMappingChange('categoryColumn', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select category column (optional)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              {columns.map(col => (
+                <SelectItem key={col} value={col}>{col}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label>Latitude Column</Label>
@@ -317,6 +332,11 @@ export default function CSVImportDialog({
                   {zone.description && (
                     <p className="text-xs text-gray-500 mt-1 line-clamp-2">
                       {zone.description}
+                    </p>
+                  )}
+                  {zone.category && (
+                    <p className="text-xs text-blue-500 mt-1">
+                      Category: {zone.category}
                     </p>
                   )}
                 </div>

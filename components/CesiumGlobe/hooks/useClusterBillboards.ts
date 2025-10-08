@@ -95,11 +95,7 @@ export function setupClusterBillboards(
           cluster.billboard.translucencyByDistance = new Cesium.NearFarScalar(1.0e6, 1.0, 2.0e6, 0.0);
           // Enable depth testing to prevent border bleeding through overlapping markers
           cluster.billboard.disableDepthTestDistance = 0.0;
-          // Set height reference to ensure proper depth ordering
-          // Only set height reference if scene is available to avoid errors
-          if (_viewer && _viewer.scene) {
-            cluster.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
-          }
+          // Note: heightReference is not supported for cluster billboards, so we don't set it here
           cluster.billboard.show = true;
           cluster.label.show = false;
         } catch (error) {

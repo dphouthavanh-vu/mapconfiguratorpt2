@@ -117,13 +117,13 @@ export interface AtmosphereConfig {
 
 const defaultConfig: AtmosphereConfig = {
   atmosphere: {
-    brightnessShift: -0.37,
-    hueShift: 0.05,
-    saturationShift: 0.54,
-    lightIntensity: 10,
+    brightnessShift: -0.05,  // Subtle darkening for better satellite imagery contrast
+    hueShift: 0,  // Neutral - no color shift for realistic colors
+    saturationShift: 0.15,  // Reduced from 0.54 to prevent blue oversaturation
+    lightIntensity: 10,  // Reduced to let satellite imagery show through
   },
   skyAtmosphere: {
-    brightnessShift: 0.09,
+    brightnessShift: 0.05,  // Subtle sky glow without washing out globe
     hueShift: -0.01,
     saturationShift: 0.09,
   },
@@ -159,8 +159,8 @@ const defaultConfig: AtmosphereConfig = {
     fadeInDistance: 3,
     dynamicAtmosphereLighting: true, // Enable dynamic sun-based lighting
     dynamicAtmosphereLightingFromSun: false, // Use configured sun position
-    minimumBrightness: 0.2, // Keep 20% brightness on night side
-    nightIntensity: 0.3, // 30% atmosphere intensity at night
+    minimumBrightness: 0.92, // 92% brightness on night side (eliminates gray overcast)
+    nightIntensity: 0.88, // 88% atmosphere intensity (nearly uniform illumination)
     twilightAngle: 10, // 10 degree twilight transition zone
   },
   sunPosition: {
@@ -207,9 +207,9 @@ const defaultConfig: AtmosphereConfig = {
     },
     clouds: {
       layerCount: 3,
-      lowOpacity: 0.5,
-      midOpacity: 0.25,
-      highOpacity: 0.31,
+      lowOpacity: 0.65,  // Increased from 0.5 for more visible clouds
+      midOpacity: 0.4,   // Increased from 0.25
+      highOpacity: 0.45, // Increased from 0.31
       // Texture controls
       textureScaleX: 2.4,
       textureScaleY: 2.2,

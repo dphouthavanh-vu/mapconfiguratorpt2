@@ -8,6 +8,7 @@ export interface CSVImportOptions {
   nameColumn?: string;
   addressColumn?: string;
   descriptionColumn?: string;
+  categoryColumn?: string;
   latitudeColumn?: string;
   longitudeColumn?: string;
   typeColumn?: string;
@@ -18,6 +19,7 @@ export interface ImportedZone {
   name: string;
   address?: string;
   description?: string;
+  category?: string;
   latitude?: number;
   longitude?: number;
   type?: ZoneType;
@@ -106,12 +108,14 @@ export function analyzeCsvColumns(data: CSVRow[]): CSVImportOptions {
   const addressPatterns = /^(address|location|street|addr|full_address|complete_address)$/i;
   // Common patterns for description columns
   const descPatterns = /^(description|desc|details|info|information|summary|about|notes)$/i;
+  // Common patterns for category columns
+  const categoryPatterns = /^(category|cat|group|classification|tag|type_name)$/i;
   // Common patterns for latitude columns
   const latPatterns = /^(lat|latitude|y|lat_coord|geo_lat)$/i;
   // Common patterns for longitude columns
   const lngPatterns = /^(lon|long|longitude|lng|x|lng_coord|lon_coord|geo_lng|geo_lon)$/i;
   // Common patterns for type columns
-  const typePatterns = /^(type|category|kind|class|zone_type)$/i;
+  const typePatterns = /^(type|zone_type|kind|class|shape)$/i;
 
   headers.forEach(header => {
     if (!suggestions.nameColumn && namePatterns.test(header)) {
@@ -122,6 +126,9 @@ export function analyzeCsvColumns(data: CSVRow[]): CSVImportOptions {
     }
     if (!suggestions.descriptionColumn && descPatterns.test(header)) {
       suggestions.descriptionColumn = header;
+    }
+    if (!suggestions.categoryColumn && categoryPatterns.test(header)) {
+      suggestions.categoryColumn = header;
     }
     if (!suggestions.latitudeColumn && latPatterns.test(header)) {
       suggestions.latitudeColumn = header;
@@ -151,6 +158,7 @@ export function csvToZones(data: CSVRow[], mappings: CSVImportOptions): Imported
       name: mappings.nameColumn ? row[mappings.nameColumn] : 'Unnamed Zone',
       address: mappings.addressColumn ? row[mappings.addressColumn] : undefined,
       description: mappings.descriptionColumn ? row[mappings.descriptionColumn] : undefined,
+      category: mappings.categoryColumn ? row[mappings.categoryColumn] : undefined,
     };
 
     if (mappings.latitudeColumn && mappings.longitudeColumn) {
@@ -225,6 +233,7 @@ export function prepareZonesForCanvas(
       content: {
         title: zone.name,
         description: zone.description || '',
+        category: zone.category,
         images: [],
         videos: [],
         links: [],

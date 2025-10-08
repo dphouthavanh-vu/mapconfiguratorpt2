@@ -7,6 +7,8 @@ export interface Landmark {
   contentUrl?: string; // Optional: web page URL for fullscreen modal (replaces videoUrl)
   height?: number;  // Optional: height above ground level in meters
   description?: string; // Zone description
+  category?: string; // Category for filtering
+  originalIndex?: number; // Original index in unfiltered array for marker image lookup
   images?: string[]; // Array of image URLs
   links?: Array<{url: string; label?: string}>; // Array of links with optional labels
   videos?: string[]; // Array of video URLs

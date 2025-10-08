@@ -43,7 +43,7 @@ model Zone {
   // Circle: {x, y, radius}
   // Polygon: {points: [{x, y}, {x, y}, ...]}
   coordinates   String
-  // Content for this zone (JSON: {title, description, images, links})
+  // Content for this zone (JSON: {title, description, category, images, links})
   content       String
   // Style configuration (JSON: {color, borderColor, opacity, icon, etc.})
   style         String?

@@ -17,6 +17,7 @@ interface LandmarkCSV {
   color?: string;
   contentUrl?: string;
   description?: string;
+  category?: string;
   images?: string[];
   links?: Array<{url: string; label?: string}>;
   videos?: string[];
@@ -178,6 +179,9 @@ export function zonesToLandmarks(
     // Add full content data for modal display
     if (content.description) {
       landmark.description = content.description;
+    }
+    if (content.category) {
+      landmark.category = content.category;
     }
     if (content.images && content.images.length > 0) {
       landmark.images = content.images;

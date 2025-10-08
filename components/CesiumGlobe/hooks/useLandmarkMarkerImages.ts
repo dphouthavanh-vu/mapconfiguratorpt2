@@ -25,6 +25,7 @@ export function useLandmarkMarkerImages(landmarks: Landmark[], fontSize: number 
             text: landmark.name,
             color: landmark.color,
             fontSize: fontSize,
+            category: landmark.category,
           });
         } catch (e) {
           console.error('❌ Error creating marker image for landmark', landmark, e);
@@ -35,6 +36,7 @@ export function useLandmarkMarkerImages(landmarks: Landmark[], fontSize: number 
               text: landmark.name,
               color: landmark.color,
               fontSize: fontSize,
+              category: landmark.category,
             });
           } catch (fallbackError) {
             console.error('❌ Even fallback marker failed for landmark', landmark, fallbackError);

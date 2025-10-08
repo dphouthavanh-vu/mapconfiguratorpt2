@@ -47,6 +47,7 @@ export type ZoneCoordinates =
 export interface ZoneContent {
   title: string;
   description?: string;
+  category?: string; // Category for filtering zones
   images?: string[]; // Array of image URLs or base64 data
   videos?: string[]; // Array of video URLs
   links?: { label: string; url: string }[];

@@ -472,25 +472,28 @@ export function useCesiumViewerSetup({
     }
     
     // Check if we have marker images for all landmarks
+    // Use originalIndex if available (for filtered landmarks), otherwise use array index
     const missingImages = [];
     for (let i = 0; i < LANDMARKS.length; i++) {
-      if (!markerImages[i]) {
-        missingImages.push(i);
+      const imageIndex = LANDMARKS[i].originalIndex !== undefined ? LANDMARKS[i].originalIndex : i;
+      if (!markerImages[imageIndex]) {
+        missingImages.push({ landmarkIndex: i, imageIndex });
       }
     }
-    
+
     if (missingImages.length > 0) {
       return; // Don't create entities if we're missing images
     }
-    
+
     // Additional validation: ensure all marker images are valid data URLs
     const invalidImages = [];
     for (let i = 0; i < LANDMARKS.length; i++) {
-      if (!markerImages[i] || !markerImages[i].startsWith('data:image/')) {
-        invalidImages.push({ index: i, value: markerImages[i] });
+      const imageIndex = LANDMARKS[i].originalIndex !== undefined ? LANDMARKS[i].originalIndex : i;
+      if (!markerImages[imageIndex] || !markerImages[imageIndex].startsWith('data:image/')) {
+        invalidImages.push({ landmarkIndex: i, imageIndex, value: markerImages[imageIndex] });
       }
     }
-    
+
     if (invalidImages.length > 0) {
       return; // Don't create entities if we have invalid images
     }
@@ -503,15 +506,19 @@ export function useCesiumViewerSetup({
     console.log(`[createEntities] Creating entities for ${LANDMARKS.length} landmarks`);
 
     LANDMARKS.forEach((landmark, i) => {
+      // Use originalIndex if available (for filtered landmarks), otherwise use array index
+      const imageIndex = landmark.originalIndex !== undefined ? landmark.originalIndex : i;
+
       console.log(`[createEntities] Landmark ${i}:`, {
         name: landmark.name,
         lon: landmark.lon,
         lat: landmark.lat,
-        height: landmark.height
+        height: landmark.height,
+        imageIndex
       });
 
-      if (!markerImages[i]) {
-        console.error(`❌ Cannot create entity ${i} - missing marker image`);
+      if (!markerImages[imageIndex]) {
+        console.error(`❌ Cannot create entity ${i} - missing marker image at index ${imageIndex}`);
         return; // Skip this entity
       }
 
@@ -531,16 +538,22 @@ export function useCesiumViewerSetup({
                 const entity = dataSourceRef.current!.entities.add({
           position: Cesium.Cartesian3.fromDegrees(landmark.lon, landmark.lat, landmark.height || 0),
           billboard: {
-            image: markerImages[i],
+            image: markerImages[imageIndex],
             show: true,
-            scale: 0.6,
+            scale: 0.75,  // Increased base scale for better visibility on LED walls and tablets
             // Position the marker so the pointer tip (bottom-left) points to the geographic coordinate
             // The pointer tip is at the bottom-left of the SVG, so no offset is needed
             pixelOffset: new Cesium.Cartesian2(0, 0), // No offset needed when positioning at bottom-left
             // Position relative to bottom-left for consistent pointer tip positioning
             verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
             horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
-            // Removed scaleByDistance to prevent automatic scaling during camera movements
+            // Optimized scaling curve for accessibility at all zoom levels
+            scaleByDistance: new Cesium.NearFarScalar(
+              1000,     // When closer than 1km
+              1.0,      // Scale to 1.0x (fully readable up close)
+              80000,    // When farther than 80km
+              0.5       // Scale to 0.5x (compact when far, extended range)
+            ),
             translucencyByDistance: new Cesium.NearFarScalar(1.0e6, 1.0, 2.0e6, 0.0),
             // Enable depth testing to prevent border bleeding through overlapping markers
             disableDepthTestDistance: 0.0,

@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import * as Cesium from 'cesium';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 import { motion } from 'framer-motion';
@@ -11,6 +11,7 @@ import { calculateClusteringParameters } from './utils/scalingUtils';
 
 import FullscreenModal from './components/FullscreenModal';
 import AtmosphereDebugPanel from './components/AtmosphereDebugPanel';
+import CategoryFilterPanel from './components/CategoryFilterPanel';
 import { useLandmarkMarkerImages } from './hooks/useLandmarkMarkerImages';
 import { useCesiumViewerSetup } from './hooks/useCesiumViewerSetup';
 import { useFlyThroughEntity } from './hooks/useFlyThroughEntity';
@@ -43,6 +44,125 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds, onBackTo
   console.log('[CesiumGlobe] Received landmarks:', landmarksProp);
   console.log('[CesiumGlobe] Title:', title);
   console.log('[CesiumGlobe] Geographic bounds:', geoBounds);
+
+  // Extract unique categories from landmarks
+  const allCategories = useMemo(() =>
+    Array.from(
+      new Set(landmarksProp.map(l => l.category).filter((c): c is string => !!c))
+    ).sort(),
+    [landmarksProp]
+  );
+
+  // State for category filtering
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
+    new Set(allCategories)
+  );
+
+  // Filter landmarks based on selected categories (memoized to prevent recreating array on every render)
+  // Also add original index to each landmark so marker images can be looked up correctly
+  const filteredLandmarks = useMemo(() =>
+    landmarksProp
+      .map((landmark, originalIndex) => ({ ...landmark, originalIndex }))
+      .filter(landmark => {
+        // If no category, always show
+        if (!landmark.category) return true;
+        // If category exists, check if it's selected
+        return selectedCategories.has(landmark.category);
+      }),
+    [landmarksProp, selectedCategories]
+  );
+
+  // Track if this is the initial load to prevent auto-zoom on first render
+  const initialLoadRef = useRef(true);
+
+  // Category filter handlers
+  const handleToggleCategory = (category: string) => {
+    setSelectedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAllCategories = () => {
+    setSelectedCategories(new Set(allCategories));
+  };
+
+  const handleClearAllCategories = () => {
+    setSelectedCategories(new Set());
+  };
+
+  // Update selected categories when allCategories changes (e.g., new landmarks loaded)
+  useEffect(() => {
+    setSelectedCategories(prev => {
+      const newCategories = new Set(prev);
+      // Add any new categories
+      allCategories.forEach(cat => newCategories.add(cat));
+      // Remove categories that no longer exist
+      const validCategories = new Set(allCategories);
+      Array.from(newCategories).forEach(cat => {
+        if (!validCategories.has(cat)) {
+          newCategories.delete(cat);
+        }
+      });
+      return newCategories;
+    });
+  }, [allCategories]);
+
+  // Zoom to filtered landmarks when categories change
+  const zoomToFilteredLandmarks = useCallback(() => {
+    if (!viewerRef.current || entityRefs.current.length === 0) {
+      return;
+    }
+
+    // Get positions of all currently visible entities (based on filtered landmarks)
+    const positions = entityRefs.current.map((entity) => {
+      if (entity.properties) {
+        const lon = entity.properties.lon?.getValue();
+        const lat = entity.properties.lat?.getValue();
+        const height = entity.properties.height?.getValue() || 0;
+
+        if (lon !== undefined && lat !== undefined) {
+          return Cesium.Cartesian3.fromDegrees(lon, lat, height);
+        }
+      }
+      return null;
+    }).filter(pos => pos !== null);
+
+    if (positions.length === 0) {
+      console.warn('[zoomToFilteredLandmarks] No valid positions found');
+      return;
+    }
+
+    // Create bounding sphere from visible landmarks
+    const boundingSphere = Cesium.BoundingSphere.fromPoints(positions);
+
+    // Fly to the bounding sphere
+    viewerRef.current.camera.flyToBoundingSphere(boundingSphere, {
+      duration: 1.5,
+      offset: new Cesium.HeadingPitchRange(0, -Math.PI / 2, boundingSphere.radius * 3),
+    });
+  }, []);
+
+  // Trigger zoom when filtered landmarks change (but not on initial load)
+  useEffect(() => {
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      return;
+    }
+
+    // Only zoom if we have some categories selected (prevent zoom when all are cleared)
+    if (selectedCategories.size > 0 && selectedCategories.size < allCategories.length) {
+      // Small delay to ensure entities are updated
+      setTimeout(() => {
+        zoomToFilteredLandmarks();
+      }, 100);
+    }
+  }, [filteredLandmarks.length, zoomToFilteredLandmarks, selectedCategories.size, allCategories.length]);
 
   const cesiumContainerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Cesium.Viewer | null>(null);
@@ -109,8 +229,8 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds, onBackTo
   const [logoOpacity, setLogoOpacity] = useState<number>(0);
   const logoSizePx = Math.max(80, Math.min(240, Math.round((logoSize.width + logoSize.height) / 4)));
 
-  // Use landmarks from props (or empty array if not provided)
-  const LANDMARKS = landmarksProp;
+  // Use filtered landmarks for display
+  const LANDMARKS = filteredLandmarks;
   const landmarksLoading = false;
   const landmarksError = null;
 
@@ -156,8 +276,9 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds, onBackTo
   const getScaledBorderRadius = (radius: number) => radius;
   const getUIScaledDimensions = (width: number, height: number) => ({ width, height });
 
-  // Generate marker images with fixed font size
-  const { markerImages, loading: markerImagesLoading } = useLandmarkMarkerImages(LANDMARKS, 20);
+  // Generate marker images for ALL landmarks (not filtered) to prevent re-rendering
+  // We'll filter which ones to display later
+  const { markerImages, loading: markerImagesLoading } = useLandmarkMarkerImages(landmarksProp, 20);
 
   // Setup Cesium viewer and entities with marker images
   const { entitiesReady, cesiumError, viewerReady } = useCesiumViewerSetup({
@@ -334,7 +455,9 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds, onBackTo
       // Use default sun based on current time
       viewer.clock.shouldAnimate = false;
       viewer.scene.light = new Cesium.SunLight();
-      viewer.scene.sun.show = atmosphereConfig.sunVisuals.showSun;
+      if (viewer.scene.sun) {
+        viewer.scene.sun.show = atmosphereConfig.sunVisuals.showSun;
+      }
     }
 
     // Apply sun glow size (guard sun)
@@ -2076,6 +2199,16 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds, onBackTo
           </div>
         </div>
       )}
+
+      {/* Category Filter Panel */}
+      <CategoryFilterPanel
+        categories={allCategories}
+        selectedCategories={selectedCategories}
+        onToggleCategory={handleToggleCategory}
+        onSelectAll={handleSelectAllCategories}
+        onClearAll={handleClearAllCategories}
+        visible={!modalOpen && allCategories.length > 0}
+      />
 
       <FullscreenModal
         open={modalOpen && activeLandmarkIdx !== null}
