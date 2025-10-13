@@ -983,7 +983,7 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds, onBackTo
 
 
 
-  // Smart spin that ends positioned over landmarks
+  // Direct zoom to landmarks without spinning animation
   const handleZoomToAllWithSpin = () => {
     if (!entitiesReady) {
       console.warn('Entities/data source not ready for zoom!');
@@ -998,297 +998,76 @@ const CesiumGlobe = ({ landmarks: landmarksProp = [], title, geoBounds, onBackTo
         const lat = entity.properties.lat?.getValue();
         const height = entity.properties.height?.getValue() ?? 0;
 
-        console.log(`[SmartAnimateRotateToShow] Entity ${index} position:`, { lon, lat, height });
+        console.log(`[DirectZoomToLandmarks] Entity ${index} position:`, { lon, lat, height });
 
         // Validate coordinates
         if (!isFinite(lon) || !isFinite(lat) || lon < -180 || lon > 180 || lat < -90 || lat > 90) {
-          console.warn(`[SmartAnimateRotateToShow] Invalid coordinates for entity ${index}:`, { lon, lat });
+          console.warn(`[DirectZoomToLandmarks] Invalid coordinates for entity ${index}:`, { lon, lat });
           return null;
         }
 
         return Cesium.Cartesian3.fromDegrees(lon, lat, height);
       }
-      console.warn(`[SmartAnimateRotateToShow] Entity ${index} has no properties`);
+      console.warn(`[DirectZoomToLandmarks] Entity ${index} has no properties`);
       return null;
     }).filter(pos => pos !== null);
 
     if (positions.length === 0) {
-      console.error('[SmartAnimateRotateToShow] No valid positions found for entities');
+      console.error('[DirectZoomToLandmarks] No valid positions found for entities');
       return;
     }
 
-    console.log(`[SmartAnimateRotateToShow] Creating bounding sphere from ${positions.length} positions`);
+    console.log(`[DirectZoomToLandmarks] Creating bounding sphere from ${positions.length} positions`);
     const boundingSphere = Cesium.BoundingSphere.fromPoints(positions);
-    const centerCartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(boundingSphere.center);
-    const targetLon = Cesium.Math.toDegrees(centerCartographic.longitude);
-    // const targetLat = Cesium.Math.toDegrees(centerCartographic.latitude); // Unused
 
-    // We'll set the fly-through entity position after the zoom completes
-    // so we can position it relative to the final camera height
-
-    // Start the smart spin that will end over landmarks
-    fastSpinActive.current = true;
-    spinningStopped.current = false;
-    rotatingRef.current = true;
-
-    // Get ACTUAL current camera state - EVERYTHING
-    let startLon = 0;
-    let startLat = 0;
-    let startHeight = fitDistanceRef.current;
-    let startHeading = 0;
-    let startPitch = Cesium.Math.toRadians(-90);
-    let startRoll = 0;
-
-    if (viewerRef.current) {
-      // Get actual current position
-      const currentPos = viewerRef.current.camera.position;
-      const currentCartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(currentPos);
-      startLon = Cesium.Math.toDegrees(currentCartographic.longitude);
-      startLat = Cesium.Math.toDegrees(currentCartographic.latitude);
-      startHeight = currentCartographic.height;
-
-      // Get actual current orientation
-      startHeading = viewerRef.current.camera.heading;
-      startPitch = viewerRef.current.camera.pitch;
-      startRoll = viewerRef.current.camera.roll;
-
-    }
-
-    const startTime = Date.now();
-    const spinDuration = 3500; // 3.5 seconds for smoother animation
-
-    // Calculate the shortest path to target longitude
-    let deltaLon = targetLon - startLon;
-    if (deltaLon > 180) deltaLon -= 360;
-    if (deltaLon < -180) deltaLon += 360;
-
-    // Add just one extra rotation for visual effect (1 full rotation plus the delta)
-    const totalRotation = deltaLon + (360); // 360 degrees = 1 full rotation
-
-    const smartAnimate = () => {
-      if (!rotatingRef.current || spinningStopped.current) return;
-
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / spinDuration, 1);
-
-      // Ultra-smooth easing with VERY slow start and VERY slow landing
-      let easeOut;
-      if (progress < 0.35) {
-        // First 35%: ULTRA slow start (higher power for even slower start)
-        const startProgress = progress / 0.35;
-        easeOut = Math.pow(startProgress, 6) * 0.1; // Power of 6 for extremely slow start
-      } else if (progress < 0.65) {
-        // Middle 30%: gradual acceleration to peak speed
-        const midProgress = (progress - 0.35) / 0.3;
-        // Smooth S-curve for middle section
-        easeOut = 0.1 + (midProgress * midProgress * (3 - 2 * midProgress)) * 0.7;
-      } else if (progress < 0.85) {
-        // Next 20%: start deceleration
-        const slowProgress = (progress - 0.65) / 0.2;
-        // Inverse cubic for smooth deceleration start
-        easeOut = 0.8 + (1 - Math.pow(1 - slowProgress, 3)) * 0.15;
-      } else {
-        // Last 15%: ULTRA slow landing (higher power for slower approach)
-        const landProgress = (progress - 0.85) / 0.15;
-        // Use inverse high power for very gentle landing
-        easeOut = 0.95 + (1 - Math.pow(1 - landProgress, 5)) * 0.05;
-      }
-
-      // Calculate current longitude
-      const currentRotation = totalRotation * easeOut;
-      let currentLon = startLon + currentRotation;
-
-      // Normalize longitude for camera positioning
-      while (currentLon > 180) currentLon -= 360;
-      while (currentLon < -180) currentLon += 360;
-
-      // Update the ref with normalized value
-      spinLongitudeRef.current = currentLon;
-
-      if (viewerRef.current) {
-        // Interpolate all camera properties smoothly
-        const targetLat = 20; // Target latitude to look at during spin
-        const targetHeight = fitDistanceRef.current;
-        const targetHeading = 0;
-        const targetPitch = Cesium.Math.toRadians(-90);
-        const targetRoll = 0;
-
-        // Smooth interpolation for all properties
-        const currentLat = startLat + (targetLat - startLat) * easeOut;
-        const currentHeight = startHeight + (targetHeight - startHeight) * easeOut;
-        const currentHeading = startHeading + (targetHeading - startHeading) * easeOut;
-        const currentPitch = startPitch + (targetPitch - startPitch) * easeOut;
-        const currentRoll = startRoll + (targetRoll - startRoll) * easeOut;
-
-        viewerRef.current.camera.setView({
-          destination: Cesium.Cartesian3.fromDegrees(
-            currentLon,
-            currentLat,
-            currentHeight
-          ),
-          orientation: {
-            heading: currentHeading,
-            pitch: currentPitch,
-            roll: currentRoll
-          }
-        });
-      }
-
-      if (progress < 1) {
-        animationFrameRef.current = requestAnimationFrame(smartAnimate);
-      } else {
-        // Spin completed - now positioned over landmarks
-        fastSpinActive.current = false;
-        spinningStopped.current = true;
-        rotatingRef.current = false;
-
-
-        // Capture the current logo size before hiding the overlay
-        const currentLogoSize = { ...logoSize };
-        setCapturedLogoSize(currentLogoSize);
-
-        // Show the fly-through entity at the current camera's target location (where overlay button is)
-        if (viewerRef.current) {
-          const cameraPos = viewerRef.current.camera.position;
-          const cameraCartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(cameraPos);
-          const cameraLon = Cesium.Math.toDegrees(cameraCartographic.longitude);
-          const cameraLat = Cesium.Math.toDegrees(cameraCartographic.latitude);
-
-          // Position the entity at a reasonable distance and height from the camera
-          // const entityDistance = 10000000; // 10,000km - reasonable distance // Unused
-          const heightOffset = 5000000; // 5,000km above ground - not too high
-
-          // Use a simpler approach: position the entity at a fixed offset from camera
-          // This gives us more control over the positioning
-          const latOffset = -0.005; // 1 degree north of camera (smaller offset)
-          const lonOffset = 0; // Same longitude as camera
-
-          flyThroughPositionRef.current = {
-            lon: cameraLon + lonOffset,
-            lat: cameraLat + latOffset, // Move north slightly to avoid being too far south
-            height: heightOffset // Fixed height above ground, not relative to camera
-          };
-
-        }
-
-        // Show the fly-through entity right away with the captured logo size
-        // setShowFlyThroughEntity(true);
-
-
-        // Wait a bit longer to ensure logo measurement completes before hiding overlay
-        setTimeout(() => {
-          // Now hide the overlay after capturing the size
-          setShowOverlay(false);
-        }, 200); // Increased delay to ensure measurement completes
-
-        // Use requestAnimationFrame to wait for DOM update before starting zoom operations
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            if (viewerRef.current && entityRefs.current.length > 0) {
-              // Ensure the data source is properly attached
-              if (dataSourceRef.current && !viewerRef.current.dataSources.contains(dataSourceRef.current)) {
-                viewerRef.current.dataSources.add(dataSourceRef.current);
-              }
-
-              // Note: We'll store clustering parameters after the zoom completes when adaptive clustering has updated
-
-
-              // Debug camera position
-              const cameraPos = viewerRef.current.camera.position;
-              const cameraCartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(cameraPos);
-              const cameraLon = Cesium.Math.toDegrees(cameraCartographic.longitude);
-              // const cameraLat = Cesium.Math.toDegrees(cameraCartographic.latitude); // Unused
-              // const cameraHeight = cameraCartographic.height; // Unused
-
-
-              // Force camera position if it's not where it should be
-              if (Math.abs(cameraLon - targetLon) > 1) {
-                viewerRef.current.camera.setView({
-                  destination: Cesium.Cartesian3.fromDegrees(
-                    targetLon,
-                    0,  // Changed from 20 to 0 to look at center of globe
-                    fitDistanceRef.current
-                  ),
-                  orientation: {
-                    heading: Cesium.Math.toRadians(0),
-                    pitch: Cesium.Math.toRadians(-90),
-                    roll: 0.0
-                  }
-                });
-
-                // Wait a frame for the position to update
-                requestAnimationFrame(() => {
-                  const newPos = viewerRef.current!.camera.position;
-                  const newCartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(newPos);
-                  // const newLon = Cesium.Math.toDegrees(newCartographic.longitude); // Unused
-
-
-
-                  // Now do the zoom
-                  viewerRef.current!.camera.flyToBoundingSphere(boundingSphere, {
-                    duration: 5.0,
-                    offset: new Cesium.HeadingPitchRange(0, -Math.PI / 2, boundingSphere.radius * 3),
-                    complete: () => {
-                      // Entity is already visible from when overlay was hidden
-
-                      // Store the final position for "go back to map" functionality
-                      if (viewerRef.current) {
-                        // const cameraPos = viewerRef.current.camera.position; // Unused
-                        // const cameraCartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(cameraPos); // Unused
-
-                        spinAndZoomFinalPositionRef.current = {
-                          destination: viewerRef.current.camera.position.clone(),
-                          orientation: {
-                            heading: viewerRef.current.camera.heading,
-                            pitch: viewerRef.current.camera.pitch,
-                            roll: viewerRef.current.camera.roll
-                          }
-                        };
-
-                        // Note: Clustering parameters are now stored when a pin is clicked, not here
-                      }
-                    }
-                  });
-                });
-              } else {
-
-
-
-                // Do the zoom from current correct position
-                viewerRef.current.camera.flyToBoundingSphere(boundingSphere, {
-                  duration: 5.0,
-                  offset: new Cesium.HeadingPitchRange(0, -Math.PI / 2, boundingSphere.radius * 3),
-                  complete: () => {
-                    // Entity is already visible from when overlay was hidden
-
-                    // Store the final position for "go back to map" functionality
-                    if (viewerRef.current) {
-                      spinAndZoomFinalPositionRef.current = {
-                        destination: viewerRef.current.camera.position.clone(),
-                        orientation: {
-                          heading: viewerRef.current.camera.heading,
-                          pitch: viewerRef.current.camera.pitch,
-                          roll: viewerRef.current.camera.roll
-                        }
-                      };
-
-                      // Note: Clustering parameters are now stored when a pin is clicked, not here
-                    }
-                  }
-                });
-              }
-            } else {
-              console.warn('No entities available for zoom or viewer not ready');
-            }
-          }, 50); // Short delay after DOM update
-        });
-      }
-    };
+    // Stop any rotation animation
+    fastSpinActive.current = false;
+    spinningStopped.current = true;
+    rotatingRef.current = false;
 
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
-    animationFrameRef.current = requestAnimationFrame(smartAnimate);
+
+    // Capture the current logo size before hiding the overlay
+    const currentLogoSize = { ...logoSize };
+    setCapturedLogoSize(currentLogoSize);
+
+    // Hide the overlay
+    setTimeout(() => {
+      setShowOverlay(false);
+    }, 200);
+
+    // Zoom directly to landmarks
+    setTimeout(() => {
+      if (viewerRef.current && entityRefs.current.length > 0) {
+        // Ensure the data source is properly attached
+        if (dataSourceRef.current && !viewerRef.current.dataSources.contains(dataSourceRef.current)) {
+          viewerRef.current.dataSources.add(dataSourceRef.current);
+        }
+
+        // Do the zoom directly
+        viewerRef.current.camera.flyToBoundingSphere(boundingSphere, {
+          duration: 3.0,
+          offset: new Cesium.HeadingPitchRange(0, -Math.PI / 2, boundingSphere.radius * 3),
+          complete: () => {
+            // Store the final position for "go back to map" functionality
+            if (viewerRef.current) {
+              spinAndZoomFinalPositionRef.current = {
+                destination: viewerRef.current.camera.position.clone(),
+                orientation: {
+                  heading: viewerRef.current.camera.heading,
+                  pitch: viewerRef.current.camera.pitch,
+                  roll: viewerRef.current.camera.roll
+                }
+              };
+            }
+          }
+        });
+      } else {
+        console.warn('No entities available for zoom or viewer not ready');
+      }
+    }, 250);
   };
 
   // Zoom back out to show all landmarks (reverse of pin zoom)

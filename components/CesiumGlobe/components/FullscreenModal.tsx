@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 import styles from './FullscreenModal.module.scss';
 
 
@@ -32,6 +32,8 @@ const FullscreenModal: React.FC<FullscreenModalProps> = ({
   const [iframeLoading, setIframeLoading] = useState(true);
   const [iframeError, setIframeError] = useState(false);
   const [loadTimeout, setLoadTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   // Static UI values (removed UI scaling)
   const getScaledFontSize = (size: number) => size;
@@ -181,17 +183,32 @@ const FullscreenModal: React.FC<FullscreenModalProps> = ({
                   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
                   aspectRatio: '16/9',
                 }}>
-                  <iframe
-                    src={convertToEmbedUrl(videos[0])}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      border: 'none',
-                    }}
-                    title="Featured Video"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                  />
+                  {videos[0].startsWith('data:video/') ? (
+                    <video
+                      controls
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                      }}
+                      title="Featured Video"
+                    >
+                      <source src={videos[0]} />
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : (
+                    <iframe
+                      src={convertToEmbedUrl(videos[0])}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        border: 'none',
+                      }}
+                      title="Featured Video"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                  )}
                 </div>
               </div>
             )}
@@ -222,25 +239,40 @@ const FullscreenModal: React.FC<FullscreenModalProps> = ({
                         aspectRatio: '16/9',
                       }}
                     >
-                      <iframe
-                        src={convertToEmbedUrl(videoUrl)}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          border: 'none',
-                        }}
-                        title={`Video ${index + 2}`}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
-                      />
+                      {videoUrl.startsWith('data:video/') ? (
+                        <video
+                          controls
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'contain',
+                          }}
+                          title={`Video ${index + 2}`}
+                        >
+                          <source src={videoUrl} />
+                          Your browser does not support the video tag.
+                        </video>
+                      ) : (
+                        <iframe
+                          src={convertToEmbedUrl(videoUrl)}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            border: 'none',
+                          }}
+                          title={`Video ${index + 2}`}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        />
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Images Gallery */}
-            {hasImages && (
+            {/* Images Gallery - Hero Style */}
+            {hasImages && images && (
               <div>
                 <h2 style={{
                   margin: '0 0 24px 0',
@@ -249,32 +281,191 @@ const FullscreenModal: React.FC<FullscreenModalProps> = ({
                   color: '#fff',
                   letterSpacing: '-0.5px',
                 }}>Gallery</h2>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: images && images.length === 1 ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))',
-                  gap: '24px',
-                }}>
-                  {images && images.map((image, index) => (
-                    <div key={index} style={{
-                      borderRadius: '16px',
-                      overflow: 'hidden',
-                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                      aspectRatio: '16/9',
-                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
-                    }}>
-                      <img
-                        src={image}
-                        alt={`${landmarkName} - Image ${index + 1}`}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
+
+                {/* Hero Image - Large Featured */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  style={{
+                    position: 'relative',
+                    borderRadius: '20px',
+                    overflow: 'hidden',
+                    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    aspectRatio: '16/9',
+                    maxHeight: '400px',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                    cursor: 'pointer',
+                    marginBottom: '20px',
+                  }}
+                  whileHover={{ scale: 1.015, boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)' }}
+                  transition={{ duration: 0.3 }}
+                  onClick={() => setLightboxOpen(true)}
+                >
+                  <AnimatePresence mode="wait">
+                    <motion.img
+                      key={currentImageIndex}
+                      src={images[currentImageIndex]}
+                      alt={`${landmarkName} - Image ${currentImageIndex + 1}`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  </AnimatePresence>
+
+                  {/* Zoom Icon Overlay */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '16px',
+                    right: '16px',
+                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: '50%',
+                    padding: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                  }}>
+                    <ZoomIn size={18} color="white" />
+                  </div>
+
+                  {/* Navigation Arrows (if multiple images) */}
+                  {images.length > 1 && (
+                    <>
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
                         }}
-                      />
+                        style={{
+                          position: 'absolute',
+                          left: '16px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '50%',
+                          width: '40px',
+                          height: '40px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          color: 'white',
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        <ChevronLeft size={20} strokeWidth={2.5} />
+                      </motion.button>
+
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+                        }}
+                        style={{
+                          position: 'absolute',
+                          right: '16px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '50%',
+                          width: '40px',
+                          height: '40px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          color: 'white',
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        <ChevronRight size={20} strokeWidth={2.5} />
+                      </motion.button>
+                    </>
+                  )}
+
+                  {/* Image Counter */}
+                  {images.length > 1 && (
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '16px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                      backdropFilter: 'blur(10px)',
+                      borderRadius: '16px',
+                      padding: '6px 16px',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      color: 'white',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                    }}>
+                      {currentImageIndex + 1} / {images.length}
                     </div>
-                  ))}
-                </div>
+                  )}
+                </motion.div>
+
+                {/* Thumbnail Strip (if multiple images) */}
+                {images.length > 1 && (
+                  <div style={{
+                    display: 'flex',
+                    gap: '12px',
+                    overflowX: 'auto',
+                    paddingBottom: '6px',
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: 'rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1)',
+                  }}>
+                    {images.map((image, index) => (
+                      <motion.div
+                        key={index}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setCurrentImageIndex(index)}
+                        style={{
+                          minWidth: '100px',
+                          height: '65px',
+                          borderRadius: '10px',
+                          overflow: 'hidden',
+                          cursor: 'pointer',
+                          border: currentImageIndex === index
+                            ? '2.5px solid rgba(96, 165, 250, 0.8)'
+                            : '2px solid rgba(255, 255, 255, 0.2)',
+                          opacity: currentImageIndex === index ? 1 : 0.6,
+                          transition: 'all 0.3s',
+                          boxShadow: currentImageIndex === index
+                            ? '0 0 16px rgba(96, 165, 250, 0.4)'
+                            : 'none',
+                        }}
+                      >
+                        <img
+                          src={image}
+                          alt={`Thumbnail ${index + 1}`}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -502,6 +693,163 @@ const FullscreenModal: React.FC<FullscreenModalProps> = ({
           </motion.button>
         </div>
       </div>
+
+      {/* Fullscreen Lightbox */}
+      <AnimatePresence>
+        {lightboxOpen && images && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxOpen(false)}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.95)',
+              zIndex: 100,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '40px',
+            }}
+          >
+            {/* Close Button */}
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxOpen(false);
+              }}
+              style={{
+                position: 'absolute',
+                top: '30px',
+                right: '30px',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '50%',
+                width: '56px',
+                height: '56px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'white',
+                zIndex: 101,
+              }}
+            >
+              <X size={28} strokeWidth={2.5} />
+            </motion.button>
+
+            {/* Lightbox Image */}
+            <motion.img
+              key={`lightbox-${currentImageIndex}`}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              src={images[currentImageIndex]}
+              alt={`${landmarkName} - Image ${currentImageIndex + 1}`}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                maxWidth: '90%',
+                maxHeight: '90%',
+                objectFit: 'contain',
+                borderRadius: '12px',
+                boxShadow: '0 20px 80px rgba(0, 0, 0, 0.8)',
+              }}
+            />
+
+            {/* Navigation Arrows in Lightbox */}
+            {images.length > 1 && (
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.15, backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+                  }}
+                  style={{
+                    position: 'absolute',
+                    left: '40px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '50%',
+                    width: '64px',
+                    height: '64px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'white',
+                    zIndex: 101,
+                  }}
+                >
+                  <ChevronLeft size={32} strokeWidth={2.5} />
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.15, backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+                  }}
+                  style={{
+                    position: 'absolute',
+                    right: '40px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '50%',
+                    width: '64px',
+                    height: '64px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'white',
+                    zIndex: 101,
+                  }}
+                >
+                  <ChevronRight size={32} strokeWidth={2.5} />
+                </motion.button>
+              </>
+            )}
+
+            {/* Image Counter in Lightbox */}
+            {images.length > 1 && (
+              <div style={{
+                position: 'absolute',
+                bottom: '40px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '24px',
+                padding: '12px 28px',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: 'white',
+                fontSize: '16px',
+                fontWeight: '600',
+                zIndex: 101,
+              }}>
+                {currentImageIndex + 1} / {images.length}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

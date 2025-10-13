@@ -92,6 +92,31 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
     });
   };
 
+  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      // Check file size (limit to 100MB)
+      const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+      if (file.size > maxSize) {
+        alert(`File ${file.name} is too large. Maximum size is 100MB.`);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const videoUrl = event.target?.result as string;
+        // Use functional setState to get the latest state
+        setZoneContent(prevContent => ({
+          ...prevContent,
+          videos: [...(prevContent.videos || []), videoUrl],
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleCanvasClick = (e: any) => {
     if (placementMode !== 'click') return;
 
@@ -461,44 +486,97 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
               )}
             </div>
 
-            {/* Video URLs */}
+            {/* Videos */}
             <div className="space-y-2">
-              <Label>Video URL (YouTube, Vimeo, etc.)</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="https://youtube.com/watch?v=..."
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      const input = e.target as HTMLInputElement;
-                      if (input.value) {
-                        setZoneContent(prevContent => ({
-                          ...prevContent,
-                          videos: [...(prevContent.videos || []), input.value],
-                        }));
-                        input.value = '';
-                      }
-                    }
-                  }}
-                />
-              </div>
-              {zoneContent.videos && zoneContent.videos.length > 0 && (
-                <div className="space-y-1">
-                  {zoneContent.videos.map((video, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-2 bg-gray-100 rounded">
-                      <span className="text-sm truncate flex-1">{video}</span>
-                      <button
-                        onClick={() => {
+              <Label>Videos</Label>
+              <Tabs defaultValue="upload" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="upload">Upload Video</TabsTrigger>
+                  <TabsTrigger value="url">Video URL</TabsTrigger>
+                </TabsList>
+                <TabsContent value="upload" className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Upload video files (MP4, WebM, MOV) - Max 100MB</p>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept="video/mp4,video/webm,video/quicktime,video/x-msvideo"
+                      multiple
+                      onChange={handleVideoUpload}
+                      className="cursor-pointer"
+                    />
+                  </div>
+                </TabsContent>
+                <TabsContent value="url" className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Add video URLs from YouTube, Vimeo, or other platforms</p>
+                  <div className="flex gap-2">
+                    <Input
+                      id="video-url-input"
+                      placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const input = e.target as HTMLInputElement;
+                          if (input.value) {
+                            setZoneContent(prevContent => ({
+                              ...prevContent,
+                              videos: [...(prevContent.videos || []), input.value],
+                            }));
+                            input.value = '';
+                          }
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        const input = document.getElementById('video-url-input') as HTMLInputElement;
+                        if (input && input.value) {
                           setZoneContent(prevContent => ({
                             ...prevContent,
-                            videos: prevContent.videos?.filter((_, i) => i !== idx) || [],
+                            videos: [...(prevContent.videos || []), input.value],
                           }));
-                        }}
-                        className="text-red-500 ml-2"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
+                          input.value = '';
+                        }
+                      }}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                </TabsContent>
+              </Tabs>
+
+              {/* Video List */}
+              {zoneContent.videos && zoneContent.videos.length > 0 && (
+                <div className="space-y-2 mt-3">
+                  <p className="text-sm font-medium">{zoneContent.videos.length} video{zoneContent.videos.length !== 1 ? 's' : ''} added</p>
+                  {zoneContent.videos.map((video, idx) => {
+                    const isDataUrl = video.startsWith('data:video/');
+                    return (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="flex-shrink-0 w-10 h-10 bg-blue-500 rounded flex items-center justify-center">
+                            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
+                            </svg>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm truncate block">{isDataUrl ? 'Uploaded video file' : video}</span>
+                            {isDataUrl && <span className="text-xs text-muted-foreground">Local file</span>}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setZoneContent(prevContent => ({
+                              ...prevContent,
+                              videos: prevContent.videos?.filter((_, i) => i !== idx) || [],
+                            }));
+                          }}
+                          className="text-red-500 hover:text-red-700 ml-3 px-3 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

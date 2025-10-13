@@ -179,15 +179,15 @@ export function useCesiumViewerSetup({
     );
 
     // Enable atmospheric glow and lighting effects
-    viewer.scene.globe.showGroundAtmosphere = true;
+    viewer.scene.globe.showGroundAtmosphere = false; // Disabled to remove gray layer at distance
     viewer.scene.globe.enableLighting = true;
     viewer.scene.globe.dynamicAtmosphereLighting = true;
     // Note: atmosphere values are set via the config system in CesiumGlobe.tsx
 
     // Note: Fade distances are set via the config system
 
-    // Enable sky atmosphere (all values set via config system)
-    viewer.scene.skyAtmosphere.show = true;
+    // Disable sky atmosphere to remove gray layer at distance
+    viewer.scene.skyAtmosphere.show = false;
 
     // Note: All scattering parameters are set via the config system in CesiumGlobe.tsx
 
@@ -238,6 +238,7 @@ export function useCesiumViewerSetup({
       }, // High clouds
     ];
 
+    // Cloud layers disabled to remove gray appearance when zoomed out
     // Clear existing cloud layers before creating new ones
     cloudLayersRef.current.forEach(primitive => {
       viewer.scene.primitives.remove(primitive);
@@ -245,6 +246,8 @@ export function useCesiumViewerSetup({
     cloudLayersRef.current = [];
     cloudAnimationRef.current = [];
 
+    // Cloud layer creation commented out
+    /*
     // Create multiple cloud layers
     cloudLayers.forEach((layer, index) => {
       const cloudShellRadius = earthRadius + layer.altitude;
@@ -301,6 +304,7 @@ export function useCesiumViewerSetup({
         }
       });
     }
+    */
 
     // Single animation handler for all cloud layers
     viewer.scene.postUpdate.addEventListener(() => {
