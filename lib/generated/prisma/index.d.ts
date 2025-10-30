@@ -1000,6 +1000,9 @@ export namespace Prisma {
     imageUrl: string | null
     useBaseMap: boolean | null
     published: boolean | null
+    categories: string | null
+    aiNavigatorEnabled: boolean | null
+    aiNavigatorPrompt: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1013,6 +1016,9 @@ export namespace Prisma {
     imageUrl: string | null
     useBaseMap: boolean | null
     published: boolean | null
+    categories: string | null
+    aiNavigatorEnabled: boolean | null
+    aiNavigatorPrompt: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1026,6 +1032,9 @@ export namespace Prisma {
     imageUrl: number
     useBaseMap: number
     published: number
+    categories: number
+    aiNavigatorEnabled: number
+    aiNavigatorPrompt: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -1041,6 +1050,9 @@ export namespace Prisma {
     imageUrl?: true
     useBaseMap?: true
     published?: true
+    categories?: true
+    aiNavigatorEnabled?: true
+    aiNavigatorPrompt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1054,6 +1066,9 @@ export namespace Prisma {
     imageUrl?: true
     useBaseMap?: true
     published?: true
+    categories?: true
+    aiNavigatorEnabled?: true
+    aiNavigatorPrompt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1067,6 +1082,9 @@ export namespace Prisma {
     imageUrl?: true
     useBaseMap?: true
     published?: true
+    categories?: true
+    aiNavigatorEnabled?: true
+    aiNavigatorPrompt?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -1153,6 +1171,9 @@ export namespace Prisma {
     imageUrl: string | null
     useBaseMap: boolean
     published: boolean
+    categories: string | null
+    aiNavigatorEnabled: boolean
+    aiNavigatorPrompt: string | null
     createdAt: Date
     updatedAt: Date
     _count: MapCountAggregateOutputType | null
@@ -1183,6 +1204,9 @@ export namespace Prisma {
     imageUrl?: boolean
     useBaseMap?: boolean
     published?: boolean
+    categories?: boolean
+    aiNavigatorEnabled?: boolean
+    aiNavigatorPrompt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     zones?: boolean | Map$zonesArgs<ExtArgs>
@@ -1198,6 +1222,9 @@ export namespace Prisma {
     imageUrl?: boolean
     useBaseMap?: boolean
     published?: boolean
+    categories?: boolean
+    aiNavigatorEnabled?: boolean
+    aiNavigatorPrompt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["map"]>
@@ -1211,6 +1238,9 @@ export namespace Prisma {
     imageUrl?: boolean
     useBaseMap?: boolean
     published?: boolean
+    categories?: boolean
+    aiNavigatorEnabled?: boolean
+    aiNavigatorPrompt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["map"]>
@@ -1224,11 +1254,14 @@ export namespace Prisma {
     imageUrl?: boolean
     useBaseMap?: boolean
     published?: boolean
+    categories?: boolean
+    aiNavigatorEnabled?: boolean
+    aiNavigatorPrompt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type MapOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "geographicBounds" | "canvasConfig" | "imageUrl" | "useBaseMap" | "published" | "createdAt" | "updatedAt", ExtArgs["result"]["map"]>
+  export type MapOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "geographicBounds" | "canvasConfig" | "imageUrl" | "useBaseMap" | "published" | "categories" | "aiNavigatorEnabled" | "aiNavigatorPrompt" | "createdAt" | "updatedAt", ExtArgs["result"]["map"]>
   export type MapInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     zones?: boolean | Map$zonesArgs<ExtArgs>
     _count?: boolean | MapCountOutputTypeDefaultArgs<ExtArgs>
@@ -1250,6 +1283,9 @@ export namespace Prisma {
       imageUrl: string | null
       useBaseMap: boolean
       published: boolean
+      categories: string | null
+      aiNavigatorEnabled: boolean
+      aiNavigatorPrompt: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["map"]>
@@ -1684,6 +1720,9 @@ export namespace Prisma {
     readonly imageUrl: FieldRef<"Map", 'String'>
     readonly useBaseMap: FieldRef<"Map", 'Boolean'>
     readonly published: FieldRef<"Map", 'Boolean'>
+    readonly categories: FieldRef<"Map", 'String'>
+    readonly aiNavigatorEnabled: FieldRef<"Map", 'Boolean'>
+    readonly aiNavigatorPrompt: FieldRef<"Map", 'String'>
     readonly createdAt: FieldRef<"Map", 'DateTime'>
     readonly updatedAt: FieldRef<"Map", 'DateTime'>
   }
@@ -3229,6 +3268,9 @@ export namespace Prisma {
     imageUrl: 'imageUrl',
     useBaseMap: 'useBaseMap',
     published: 'published',
+    categories: 'categories',
+    aiNavigatorEnabled: 'aiNavigatorEnabled',
+    aiNavigatorPrompt: 'aiNavigatorPrompt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -3314,6 +3356,9 @@ export namespace Prisma {
     imageUrl?: StringNullableFilter<"Map"> | string | null
     useBaseMap?: BoolFilter<"Map"> | boolean
     published?: BoolFilter<"Map"> | boolean
+    categories?: StringNullableFilter<"Map"> | string | null
+    aiNavigatorEnabled?: BoolFilter<"Map"> | boolean
+    aiNavigatorPrompt?: StringNullableFilter<"Map"> | string | null
     createdAt?: DateTimeFilter<"Map"> | Date | string
     updatedAt?: DateTimeFilter<"Map"> | Date | string
     zones?: ZoneListRelationFilter
@@ -3328,6 +3373,9 @@ export namespace Prisma {
     imageUrl?: SortOrderInput | SortOrder
     useBaseMap?: SortOrder
     published?: SortOrder
+    categories?: SortOrderInput | SortOrder
+    aiNavigatorEnabled?: SortOrder
+    aiNavigatorPrompt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     zones?: ZoneOrderByRelationAggregateInput
@@ -3345,6 +3393,9 @@ export namespace Prisma {
     imageUrl?: StringNullableFilter<"Map"> | string | null
     useBaseMap?: BoolFilter<"Map"> | boolean
     published?: BoolFilter<"Map"> | boolean
+    categories?: StringNullableFilter<"Map"> | string | null
+    aiNavigatorEnabled?: BoolFilter<"Map"> | boolean
+    aiNavigatorPrompt?: StringNullableFilter<"Map"> | string | null
     createdAt?: DateTimeFilter<"Map"> | Date | string
     updatedAt?: DateTimeFilter<"Map"> | Date | string
     zones?: ZoneListRelationFilter
@@ -3359,6 +3410,9 @@ export namespace Prisma {
     imageUrl?: SortOrderInput | SortOrder
     useBaseMap?: SortOrder
     published?: SortOrder
+    categories?: SortOrderInput | SortOrder
+    aiNavigatorEnabled?: SortOrder
+    aiNavigatorPrompt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: MapCountOrderByAggregateInput
@@ -3378,6 +3432,9 @@ export namespace Prisma {
     imageUrl?: StringNullableWithAggregatesFilter<"Map"> | string | null
     useBaseMap?: BoolWithAggregatesFilter<"Map"> | boolean
     published?: BoolWithAggregatesFilter<"Map"> | boolean
+    categories?: StringNullableWithAggregatesFilter<"Map"> | string | null
+    aiNavigatorEnabled?: BoolWithAggregatesFilter<"Map"> | boolean
+    aiNavigatorPrompt?: StringNullableWithAggregatesFilter<"Map"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Map"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Map"> | Date | string
   }
@@ -3461,6 +3518,9 @@ export namespace Prisma {
     imageUrl?: string | null
     useBaseMap?: boolean
     published?: boolean
+    categories?: string | null
+    aiNavigatorEnabled?: boolean
+    aiNavigatorPrompt?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     zones?: ZoneCreateNestedManyWithoutMapInput
@@ -3475,6 +3535,9 @@ export namespace Prisma {
     imageUrl?: string | null
     useBaseMap?: boolean
     published?: boolean
+    categories?: string | null
+    aiNavigatorEnabled?: boolean
+    aiNavigatorPrompt?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     zones?: ZoneUncheckedCreateNestedManyWithoutMapInput
@@ -3489,6 +3552,9 @@ export namespace Prisma {
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     useBaseMap?: BoolFieldUpdateOperationsInput | boolean
     published?: BoolFieldUpdateOperationsInput | boolean
+    categories?: NullableStringFieldUpdateOperationsInput | string | null
+    aiNavigatorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiNavigatorPrompt?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     zones?: ZoneUpdateManyWithoutMapNestedInput
@@ -3503,6 +3569,9 @@ export namespace Prisma {
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     useBaseMap?: BoolFieldUpdateOperationsInput | boolean
     published?: BoolFieldUpdateOperationsInput | boolean
+    categories?: NullableStringFieldUpdateOperationsInput | string | null
+    aiNavigatorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiNavigatorPrompt?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     zones?: ZoneUncheckedUpdateManyWithoutMapNestedInput
@@ -3517,6 +3586,9 @@ export namespace Prisma {
     imageUrl?: string | null
     useBaseMap?: boolean
     published?: boolean
+    categories?: string | null
+    aiNavigatorEnabled?: boolean
+    aiNavigatorPrompt?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -3530,6 +3602,9 @@ export namespace Prisma {
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     useBaseMap?: BoolFieldUpdateOperationsInput | boolean
     published?: BoolFieldUpdateOperationsInput | boolean
+    categories?: NullableStringFieldUpdateOperationsInput | string | null
+    aiNavigatorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiNavigatorPrompt?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -3543,6 +3618,9 @@ export namespace Prisma {
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     useBaseMap?: BoolFieldUpdateOperationsInput | boolean
     published?: BoolFieldUpdateOperationsInput | boolean
+    categories?: NullableStringFieldUpdateOperationsInput | string | null
+    aiNavigatorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiNavigatorPrompt?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -3691,6 +3769,9 @@ export namespace Prisma {
     imageUrl?: SortOrder
     useBaseMap?: SortOrder
     published?: SortOrder
+    categories?: SortOrder
+    aiNavigatorEnabled?: SortOrder
+    aiNavigatorPrompt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -3704,6 +3785,9 @@ export namespace Prisma {
     imageUrl?: SortOrder
     useBaseMap?: SortOrder
     published?: SortOrder
+    categories?: SortOrder
+    aiNavigatorEnabled?: SortOrder
+    aiNavigatorPrompt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -3717,6 +3801,9 @@ export namespace Prisma {
     imageUrl?: SortOrder
     useBaseMap?: SortOrder
     published?: SortOrder
+    categories?: SortOrder
+    aiNavigatorEnabled?: SortOrder
+    aiNavigatorPrompt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -4077,6 +4164,9 @@ export namespace Prisma {
     imageUrl?: string | null
     useBaseMap?: boolean
     published?: boolean
+    categories?: string | null
+    aiNavigatorEnabled?: boolean
+    aiNavigatorPrompt?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -4090,6 +4180,9 @@ export namespace Prisma {
     imageUrl?: string | null
     useBaseMap?: boolean
     published?: boolean
+    categories?: string | null
+    aiNavigatorEnabled?: boolean
+    aiNavigatorPrompt?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -4119,6 +4212,9 @@ export namespace Prisma {
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     useBaseMap?: BoolFieldUpdateOperationsInput | boolean
     published?: BoolFieldUpdateOperationsInput | boolean
+    categories?: NullableStringFieldUpdateOperationsInput | string | null
+    aiNavigatorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiNavigatorPrompt?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -4132,6 +4228,9 @@ export namespace Prisma {
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     useBaseMap?: BoolFieldUpdateOperationsInput | boolean
     published?: BoolFieldUpdateOperationsInput | boolean
+    categories?: NullableStringFieldUpdateOperationsInput | string | null
+    aiNavigatorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiNavigatorPrompt?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

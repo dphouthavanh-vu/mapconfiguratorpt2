@@ -3,7 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import GlobeViewer from '@/components/globe-viewer';
+import dynamic from 'next/dynamic';
 import { GeographicBounds, CanvasConfig } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+
+// Dynamically import Google Maps viewer for maps without bounds
+const GoogleMaps3DViewer = dynamic(() => import('@/components/google-maps-3d-viewer'), { ssr: false });
 
 interface Zone {
   id: string;
@@ -71,6 +76,24 @@ export default function MapViewerPage() {
     : null;
   const canvasConfig: CanvasConfig = JSON.parse(map.canvasConfig);
 
+  // If no geographic bounds, use Google Maps 3D viewer
+  if (!geoBounds) {
+    return (
+      <div className="relative h-screen w-full bg-black">
+        <GoogleMaps3DViewer
+          zones={map.zones}
+          mapTitle={map.title}
+          geoBounds={null}
+          canvasConfig={canvasConfig}
+          aiNavigatorEnabled={map.aiNavigatorEnabled}
+          aiNavigatorPrompt={map.aiNavigatorPrompt}
+          onBackToMaps={() => router.push('/maps')}
+        />
+      </div>
+    );
+  }
+
+  // Otherwise use Cesium globe viewer
   return (
     <div className="relative h-screen w-full bg-black">
       {/* Globe Viewer */}
@@ -79,6 +102,8 @@ export default function MapViewerPage() {
         canvasConfig={canvasConfig}
         geoBounds={geoBounds}
         mapTitle={map.title}
+        aiNavigatorEnabled={map.aiNavigatorEnabled}
+        aiNavigatorPrompt={map.aiNavigatorPrompt}
         onBackToMaps={() => router.push('/maps')}
         onView2D={() => router.push(`/map/${params.id}/2d`)}
       />

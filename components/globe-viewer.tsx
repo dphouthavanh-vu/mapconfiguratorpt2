@@ -5,9 +5,9 @@ import { zonesToLandmarks } from '@/lib/csv-generator';
 import { GeographicBounds, CanvasConfig } from '@/lib/types';
 import dynamic from 'next/dynamic';
 
-// Dynamically import the Cesium globe to avoid SSR issues
-const CesiumGlobe = dynamic(
-  () => import('./CesiumGlobe/CesiumGlobe').then((mod) => mod.default),
+// Dynamically import the Google Maps 3D viewer to avoid SSR issues
+const GoogleMaps3DViewer = dynamic(
+  () => import('./google-maps-3d-viewer').then((mod) => mod.default),
   { ssr: false }
 );
 
@@ -24,11 +24,13 @@ interface GlobeViewerProps {
   canvasConfig: CanvasConfig;
   geoBounds: GeographicBounds | null;
   mapTitle: string;
+  aiNavigatorEnabled?: boolean;
+  aiNavigatorPrompt?: string | null;
   onBackToMaps?: () => void;
   onView2D?: () => void;
 }
 
-export default function GlobeViewer({ zones, canvasConfig, geoBounds, mapTitle, onBackToMaps, onView2D }: GlobeViewerProps) {
+export default function GlobeViewer({ zones, canvasConfig, geoBounds, mapTitle, aiNavigatorEnabled, aiNavigatorPrompt, onBackToMaps, onView2D }: GlobeViewerProps) {
   // Convert zones to landmarks for the globe
   const landmarks = useMemo(() => {
     if (!geoBounds || zones.length === 0) {
@@ -74,10 +76,14 @@ export default function GlobeViewer({ zones, canvasConfig, geoBounds, mapTitle, 
 
   return (
     <div className="h-screen w-full bg-black">
-      <CesiumGlobe
+      <GoogleMaps3DViewer
+        zones={zones}
         landmarks={landmarks}
         title={mapTitle}
         geoBounds={geoBounds}
+        canvasConfig={canvasConfig}
+        aiNavigatorEnabled={aiNavigatorEnabled}
+        aiNavigatorPrompt={aiNavigatorPrompt}
         onBackToMaps={onBackToMaps}
         onView2D={onView2D}
       />

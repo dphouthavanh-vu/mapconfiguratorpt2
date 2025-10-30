@@ -10,33 +10,27 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: `
               default-src 'self';
-              
-              script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: *.cesium.com;
-              worker-src 'self' blob: *.cesium.com;
-              
+
+              script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: *.googleapis.com *.google.com;
+              worker-src 'self' blob: *.googleapis.com;
+
               connect-src
                 'self'
-                *.cesium.com
-                https://a.tile.openstreetmap.org
-                https://b.tile.openstreetmap.org
-                https://c.tile.openstreetmap.org
-                https://nominatim.openstreetmap.org
-                https://dev.virtualearth.net
-                https://api.mapbox.com
-                *.mapbox.com;
+                *.googleapis.com
+                *.google.com
+                *.gstatic.com;
 
               img-src
                 'self'
                 blob:
                 data:
-                *.cesium.com
-                https://a.tile.openstreetmap.org
-                https://b.tile.openstreetmap.org
-                https://c.tile.openstreetmap.org
-                https://api.mapbox.com
-                *.mapbox.com;
-              
-              style-src 'self' 'unsafe-inline';
+                *.googleapis.com
+                *.google.com
+                *.gstatic.com;
+
+              style-src 'self' 'unsafe-inline' *.googleapis.com;
+
+              font-src 'self' data: *.googleapis.com *.gstatic.com;
             `.replace(/\s{2,}/g, ' ').trim(),
           },
         ],

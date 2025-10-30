@@ -31,7 +31,14 @@ export async function POST(request: NextRequest) {
             });
           }
 
-          console.log(`Google geocoding failed for "${address}": ${googleData.status}`);
+          // Handle specific Google API errors
+          if (googleData.status === 'OVER_QUERY_LIMIT') {
+            console.warn(`Google API quota exceeded for "${address}". Trying OpenStreetMap fallback...`);
+          } else if (googleData.status === 'ZERO_RESULTS') {
+            console.log(`Google geocoding found no results for "${address}"`);
+          } else {
+            console.log(`Google geocoding failed for "${address}": ${googleData.status}`);
+          }
         }
       } catch (googleError) {
         console.error('Google geocoding error:', googleError);

@@ -24,7 +24,18 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, description, geographicBounds, canvasConfig, imageUrl, useBaseMap, zones } = body;
+    const {
+      title,
+      description,
+      geographicBounds,
+      canvasConfig,
+      imageUrl,
+      useBaseMap,
+      categories,
+      zones,
+      aiNavigatorEnabled,
+      aiNavigatorPrompt
+    } = body;
 
     // Create map with zones
     const map = await prisma.map.create({
@@ -36,6 +47,9 @@ export async function POST(request: NextRequest) {
         imageUrl,
         useBaseMap,
         published: false,
+        categories: categories && categories.length > 0 ? JSON.stringify(categories) : null,
+        aiNavigatorEnabled: aiNavigatorEnabled !== undefined ? aiNavigatorEnabled : true,
+        aiNavigatorPrompt: aiNavigatorPrompt || null,
         zones: {
           create: zones.map((zone: any) => ({
             type: zone.type,

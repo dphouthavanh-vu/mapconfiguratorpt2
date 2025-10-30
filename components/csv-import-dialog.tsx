@@ -26,7 +26,7 @@ import { GeographicBounds } from '@/lib/types';
 interface CSVImportDialogProps {
   open: boolean;
   onClose: () => void;
-  onImport: (zones: GeocodedZone[]) => void;
+  onImport: (zones: GeocodedZone[], calculatedBounds?: GeographicBounds) => void;
   canvasWidth: number;
   canvasHeight: number;
   geoBounds?: GeographicBounds | null;
@@ -119,33 +119,163 @@ export default function CSVImportDialog({
     setError(null);
 
     try {
-      // Convert imported zones to canvas format
-      let canvasZones = prepareZonesForCanvas(
-        previewZones,
-        geoBounds,
-        canvasWidth,
-        canvasHeight
-      );
-
       // Check if any zones need geocoding
-      const needsGeocoding = canvasZones.some(z => z.needsGeocoding);
+      const needsGeocoding = previewZones.some(z => !z.latitude && z.address);
 
-      if (needsGeocoding && geoBounds) {
+      // If we need to geocode but don't have bounds, we need to:
+      // 1. Geocode all addresses first
+      // 2. Auto-calculate bounds from geocoded results
+      // 3. Then convert to canvas coordinates
+      let calculatedBounds = geoBounds;
+
+      let canvasZones: GeocodedZone[];
+
+      if (needsGeocoding && !geoBounds) {
+        console.log('[CSV Import] No bounds provided, will geocode and auto-calculate bounds');
         setIsGeocoding(true);
-        // Perform batch geocoding for addresses
-        canvasZones = await batchGeocodeZones(
-          canvasZones,
-          geoBounds,
+
+        // Create temporary bounds just for geocoding (will be recalculated)
+        const tempBounds = {
+          minLat: -90,
+          maxLat: 90,
+          minLng: -180,
+          maxLng: 180,
+        };
+
+        // Prepare zones with temp bounds (they'll be in wrong canvas coords, but we only need geoCoords)
+        let tempZones = prepareZonesForCanvas(
+          previewZones,
+          tempBounds,
+          canvasWidth,
+          canvasHeight
+        );
+
+        // Geocode all addresses
+        tempZones = await batchGeocodeZones(
+          tempZones,
+          tempBounds,
           canvasWidth,
           canvasHeight,
           (current, total, address) => {
             setGeocodingProgress({ current, total, address: address || '' });
           }
         );
+
+        // Auto-calculate bounds from geocoded results
+        const allGeoCoords = tempZones
+          .filter(z => z.geoCoords)
+          .map(z => z.geoCoords!);
+
+        if (allGeoCoords.length > 0) {
+          calculatedBounds = {
+            minLat: Math.min(...allGeoCoords.map(c => c.lat)) - 0.01,
+            maxLat: Math.max(...allGeoCoords.map(c => c.lat)) + 0.01,
+            minLng: Math.min(...allGeoCoords.map(c => c.lng)) - 0.01,
+            maxLng: Math.max(...allGeoCoords.map(c => c.lng)) + 0.01,
+          };
+          console.log('[CSV Import] Auto-calculated bounds from geocoded addresses:', calculatedBounds);
+        } else {
+          throw new Error('Failed to geocode any addresses');
+        }
+
+        // Use the already-geocoded zones (don't prepare them again)
+        canvasZones = tempZones;
+      } else {
+        // Convert imported zones to canvas format (with proper bounds)
+        canvasZones = prepareZonesForCanvas(
+          previewZones,
+          calculatedBounds || null,
+          canvasWidth,
+          canvasHeight
+        );
+
+        // If we still need geocoding (and we have bounds), do it now
+        const stillNeedsGeocoding = canvasZones.some(z => z.needsGeocoding);
+
+        if (stillNeedsGeocoding && calculatedBounds) {
+          setIsGeocoding(true);
+          // Perform batch geocoding for addresses
+          canvasZones = await batchGeocodeZones(
+            canvasZones,
+            calculatedBounds,
+            canvasWidth,
+            canvasHeight,
+            (current, total, address) => {
+              setGeocodingProgress({ current, total, address: address || '' });
+            }
+          );
+        }
       }
 
-      // Import the zones
-      onImport(canvasZones);
+      // Check if any zones fall outside the canvas bounds
+      console.log('[CSV Import] Checking if zones are outside bounds...');
+      console.log('[CSV Import] Canvas size:', { width: canvasWidth, height: canvasHeight });
+
+      const zonesOutsideBounds = canvasZones.filter(z => {
+        const coords = z.coordinates as { x: number; y: number };
+        const isOutside = coords.x < 0 || coords.x > canvasWidth || coords.y < 0 || coords.y > canvasHeight;
+        if (isOutside) {
+          console.log('[CSV Import] Zone outside bounds:', z.content.title, coords);
+        }
+        return isOutside;
+      });
+
+      console.log('[CSV Import] Zones outside bounds:', zonesOutsideBounds.length, 'of', canvasZones.length);
+
+      if (zonesOutsideBounds.length > 0) {
+        const outsideCount = zonesOutsideBounds.length;
+        const totalCount = canvasZones.length;
+
+        console.error(`[CSV Import] BLOCKING IMPORT: ${outsideCount} of ${totalCount} zones fall outside canvas bounds`);
+        console.warn('[CSV Import] Current bounds:', geoBounds);
+        console.warn('[CSV Import] Canvas size:', { width: canvasWidth, height: canvasHeight });
+
+        // Calculate suggested bounds that would fit all geocoded locations
+        const allGeoCoords = canvasZones
+          .filter(z => z.geoCoords)
+          .map(z => z.geoCoords!);
+
+        if (allGeoCoords.length > 0) {
+          const suggestedBounds = {
+            minLat: Math.min(...allGeoCoords.map(c => c.lat)) - 0.01,
+            maxLat: Math.max(...allGeoCoords.map(c => c.lat)) + 0.01,
+            minLng: Math.min(...allGeoCoords.map(c => c.lng)) - 0.01,
+            maxLng: Math.max(...allGeoCoords.map(c => c.lng)) + 0.01,
+          };
+          console.warn('[CSV Import] Suggested bounds to fit all locations:', suggestedBounds);
+
+          // Show error and stop import
+          const latRange = (suggestedBounds.maxLat - suggestedBounds.minLat).toFixed(2);
+          const lngRange = (suggestedBounds.maxLng - suggestedBounds.minLng).toFixed(2);
+
+          const errorMessage = `❌ Import Blocked: ${outsideCount} of ${totalCount} locations fall outside your map!\n\n` +
+            `Your map area is too small:\n` +
+            `  Current: ${geoBounds?.minLat.toFixed(4)}° to ${geoBounds?.maxLat.toFixed(4)}° lat (${((geoBounds?.maxLat || 0) - (geoBounds?.minLat || 0)).toFixed(2)}° span)\n` +
+            `  Needed: ${suggestedBounds.minLat.toFixed(4)}° to ${suggestedBounds.maxLat.toFixed(4)}° lat (${latRange}° span)\n\n` +
+            `💡 TIP: Cancel this wizard and start over:\n` +
+            `   1. Go back to Create New Map\n` +
+            `   2. In Step 2 (Canvas), use the "Import CSV" tab\n` +
+            `   3. Import your CSV there - it will auto-calculate the right bounds!\n\n` +
+            `Or manually select a larger area in Step 2 that covers all of Orlando (not just UCF campus).`;
+
+          console.error('[CSV Import] Error message:', errorMessage);
+          alert(errorMessage); // Also show as alert to be extra sure
+          setError(errorMessage);
+          setIsProcessing(false);
+          setIsGeocoding(false);
+          setStep('preview'); // Go back to preview step so user can see the error
+
+          console.log('[CSV Import] RETURNING EARLY - Import should be blocked');
+          return;
+        } else {
+          console.warn('[CSV Import] No geo coords found, allowing import to proceed');
+        }
+      } else {
+        console.log('[CSV Import] All zones within bounds, proceeding with import');
+      }
+
+      // Import the zones (and pass calculated bounds if we had to calculate them)
+      onImport(canvasZones, calculatedBounds || undefined);
       onClose();
     } catch (err) {
       setError('Failed to import zones. Please try again.');
@@ -353,16 +483,8 @@ export default function CSVImportDialog({
           )}
         </div>
 
-        {needsGeocoding && !geoBounds && hasAddresses && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Map Area Not Defined</AlertTitle>
-            <AlertDescription>
-              You need to define the map area in Step 1 before importing zones with addresses.
-              Either go back and select a geographic area, or use a CSV with latitude/longitude coordinates.
-            </AlertDescription>
-          </Alert>
-        )}
+        {/* Note: We removed the "Map Area Not Defined" error because the import handler
+            now auto-calculates bounds from geocoded addresses when geoBounds is null */}
 
         {needsGeocoding && geoBounds && (
           <Alert>
@@ -474,8 +596,8 @@ export default function CSVImportDialog({
               onClick={handleImport}
               disabled={
                 isProcessing ||
-                isGeocoding ||
-                (previewZones.some(z => z.address && !z.latitude && !z.longitude) && !geoBounds)
+                isGeocoding
+                // Note: Removed the geoBounds check - we now support auto-calculating bounds from geocoded addresses
               }
             >
               {isGeocoding ? (

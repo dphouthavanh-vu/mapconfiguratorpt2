@@ -26,6 +26,11 @@ model Map {
   useBaseMap       Boolean  @default(false)
   // Published status
   published        Boolean  @default(false)
+  // Available categories for zones in this map (JSON: string[])
+  categories       String?
+  // AI Navigator settings
+  aiNavigatorEnabled Boolean @default(true)
+  aiNavigatorPrompt  String?  // Custom system instructions for AI
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

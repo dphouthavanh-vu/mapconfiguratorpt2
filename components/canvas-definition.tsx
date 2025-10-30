@@ -13,8 +13,8 @@ import dynamic from 'next/dynamic';
 import CSVImportDialog from '@/components/csv-import-dialog';
 import { GeocodedZone } from '@/lib/csv-importer';
 
-// Dynamically import Cesium map component to avoid SSR issues
-const MapSelector = dynamic(() => import('./map-selector-cesium'), { ssr: false });
+// Dynamically import Google Maps component to avoid SSR issues
+const MapSelector = dynamic(() => import('./map-selector-google'), { ssr: false });
 
 interface CanvasDefinitionProps {
   onComplete: (bounds: GeographicBounds | null, useMap: boolean, mapImage?: string, importedZones?: GeocodedZone[]) => void;
@@ -42,27 +42,33 @@ export default function CanvasDefinition({ onComplete }: CanvasDefinitionProps) 
     onComplete(geoBounds, true, mapImageUrl, importedZones.length > 0 ? importedZones : undefined);
   };
 
-  const handleCsvImport = (zones: GeocodedZone[]) => {
+  const handleCsvImport = (zones: GeocodedZone[], calculatedBounds?: GeographicBounds) => {
     setImportedZones(zones);
     setCsvImportCompleted(true);
 
-    // Auto-calculate bounds from imported zones with geographic coordinates
-    const zonesWithGeoCoords = zones.filter(z => z.geoCoords?.lat && z.geoCoords?.lng);
-
-    if (zonesWithGeoCoords.length > 0) {
-      // Find min/max lat/lng from zones
-      const lats = zonesWithGeoCoords.map(z => z.geoCoords!.lat);
-      const lngs = zonesWithGeoCoords.map(z => z.geoCoords!.lng);
-
-      // Calculate bounds with padding
-      const calculatedBounds: GeographicBounds = {
-        minLat: Math.min(...lats) - 0.01, // Add small padding
-        maxLat: Math.max(...lats) + 0.01,
-        minLng: Math.min(...lngs) - 0.01,
-        maxLng: Math.max(...lngs) + 0.01,
-      };
+    // Use provided calculated bounds if available, otherwise calculate from zones
+    if (calculatedBounds) {
       setGeoBounds(calculatedBounds);
-      console.log('[Canvas] Auto-calculated bounds from CSV:', calculatedBounds);
+      console.log('[Canvas] Using bounds calculated during geocoding:', calculatedBounds);
+    } else {
+      // Fallback: Auto-calculate bounds from imported zones with geographic coordinates
+      const zonesWithGeoCoords = zones.filter(z => z.geoCoords?.lat && z.geoCoords?.lng);
+
+      if (zonesWithGeoCoords.length > 0) {
+        // Find min/max lat/lng from zones
+        const lats = zonesWithGeoCoords.map(z => z.geoCoords!.lat);
+        const lngs = zonesWithGeoCoords.map(z => z.geoCoords!.lng);
+
+        // Calculate bounds with padding
+        const fallbackBounds: GeographicBounds = {
+          minLat: Math.min(...lats) - 0.01, // Add small padding
+          maxLat: Math.max(...lats) + 0.01,
+          minLng: Math.min(...lngs) - 0.01,
+          maxLng: Math.max(...lngs) + 0.01,
+        };
+        setGeoBounds(fallbackBounds);
+        console.log('[Canvas] Auto-calculated bounds from CSV:', fallbackBounds);
+      }
     }
 
     setShowCsvImportDialog(false);
@@ -102,19 +108,48 @@ export default function CanvasDefinition({ onComplete }: CanvasDefinitionProps) 
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs value={selectedMethod} onValueChange={(v) => setSelectedMethod(v as 'search' | 'manual' | 'import')}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="search">Search Location</TabsTrigger>
-            <TabsTrigger value="manual">Enter Coordinates</TabsTrigger>
+        <Tabs value={selectedMethod} onValueChange={(v) => setSelectedMethod(v as 'search' | 'manual' | 'import' | 'freeform')}>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="freeform">Free Placement</TabsTrigger>
+            <TabsTrigger value="search">Define Area</TabsTrigger>
+            <TabsTrigger value="manual">Coordinates</TabsTrigger>
             <TabsTrigger value="import">Import CSV</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="freeform" className="space-y-4">
+            <div className="space-y-4">
+              <div className="text-center p-8 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50">
+                <MapPin className="h-12 w-12 mx-auto text-blue-500 mb-4" />
+                <h3 className="text-lg font-semibold mb-2 text-blue-900">Place Zones Freely on Map</h3>
+                <p className="text-sm text-blue-700 mb-4">
+                  Skip bounds selection and place zones directly on an interactive Google Maps view.
+                  Perfect for quickly adding locations anywhere in the world!
+                </p>
+                <Button
+                  onClick={() => onComplete(null, false, undefined)}
+                  size="lg"
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Continue to Interactive Map
+                </Button>
+              </div>
+              <Alert className="border-blue-200">
+                <AlertCircle className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-sm text-blue-800">
+                  <strong>How it works:</strong> In the next step, you'll see a full Google Maps interface where you can
+                  search for any location, navigate the map, and place zones by clicking directly on the map.
+                  The geographic bounds will be automatically calculated based on your placed zones.
+                </AlertDescription>
+              </Alert>
+            </div>
+          </TabsContent>
 
           <TabsContent value="search" className="space-y-4">
             <div className="space-y-2">
               <Label>Search for a location and draw a selection area</Label>
-              <div style={{ height: '500px', width: '100%' }}>
+              <div className="w-full">
                 <MapSelector
-                  onBoundsSelected={(bounds, mapImage) => {
+                  onBoundsSelect={(bounds, mapImage) => {
                     console.log('[Canvas] Bounds selected:', bounds);
                     console.log('[Canvas] Map image captured:', mapImage ? 'Yes' : 'No');
                     if (mapImage) {

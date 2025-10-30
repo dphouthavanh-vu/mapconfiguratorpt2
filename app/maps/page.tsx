@@ -147,14 +147,19 @@ export default function MapsPage() {
                       View
                     </Button>
                   </Link>
-                  <Button
-                    onClick={() => togglePublish(map.id, map.published)}
-                    variant={map.published ? 'secondary' : 'default'}
-                    className="flex-1"
-                  >
-                    {map.published ? 'Unpublish' : 'Publish'}
-                  </Button>
+                  <Link href={`/maps/${map.id}/edit`} className="flex-1">
+                    <Button variant="outline" className="w-full">
+                      Edit
+                    </Button>
+                  </Link>
                 </div>
+                <Button
+                  onClick={() => togglePublish(map.id, map.published)}
+                  variant={map.published ? 'secondary' : 'default'}
+                  className="w-full"
+                >
+                  {map.published ? 'Unpublish' : 'Publish'}
+                </Button>
                 <Button onClick={() => handleDelete(map.id)} variant="destructive" className="w-full">
                   Delete
                 </Button>

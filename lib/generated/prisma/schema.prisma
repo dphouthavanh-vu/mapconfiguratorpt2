@@ -13,21 +13,26 @@ datasource db {
 }
 
 model Map {
-  id               String   @id @default(cuid())
-  title            String
-  description      String?
+  id                 String   @id @default(cuid())
+  title              String
+  description        String?
   // Geographic bounds for the canvas area (JSON: {minLat, maxLat, minLng, maxLng})
-  geographicBounds String?
+  geographicBounds   String?
   // Canvas configuration (JSON: {width, height, coordinateSystem, etc.})
-  canvasConfig     String
+  canvasConfig       String
   // URL to uploaded blueprint/floor plan image
-  imageUrl         String?
+  imageUrl           String?
   // Whether the map uses base map imagery or uploaded blueprint
-  useBaseMap       Boolean  @default(false)
+  useBaseMap         Boolean  @default(false)
   // Published status
-  published        Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  published          Boolean  @default(false)
+  // Available categories for zones in this map (JSON: string[])
+  categories         String?
+  // AI Navigator settings
+  aiNavigatorEnabled Boolean  @default(true)
+  aiNavigatorPrompt  String? // Custom system instructions for AI
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   zones Zone[]
 }
@@ -43,7 +48,7 @@ model Zone {
   // Circle: {x, y, radius}
   // Polygon: {points: [{x, y}, {x, y}, ...]}
   coordinates String
-  // Content for this zone (JSON: {title, description, images, links})
+  // Content for this zone (JSON: {title, description, category, images, links})
   content     String
   // Style configuration (JSON: {color, borderColor, opacity, icon, etc.})
   style       String?

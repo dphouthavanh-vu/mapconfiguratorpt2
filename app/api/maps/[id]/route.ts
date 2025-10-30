@@ -34,7 +34,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, description, published, zones } = body;
+    const { title, description, published, categories, zones, aiNavigatorEnabled, aiNavigatorPrompt } = body;
 
     // Update map
     const map = await prisma.map.update({
@@ -43,6 +43,15 @@ export async function PUT(
         title,
         description,
         published,
+        ...(categories !== undefined && {
+          categories: categories && categories.length > 0 ? JSON.stringify(categories) : null,
+        }),
+        ...(aiNavigatorEnabled !== undefined && {
+          aiNavigatorEnabled,
+        }),
+        ...(aiNavigatorPrompt !== undefined && {
+          aiNavigatorPrompt,
+        }),
       },
     });
 

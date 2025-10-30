@@ -29,7 +29,7 @@ interface ZoneEditorProps {
   canvasHeight: number;
   geoBounds?: GeographicBounds | null;
   useBaseMap?: boolean;
-  onSave: (zones: Zone[]) => void;
+  onSave: (zones: Zone[], categories: string[]) => void;
   importedZones?: GeocodedZone[];
 }
 
@@ -40,7 +40,13 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
   const [editingZone, setEditingZone] = useState<Zone | null>(null);
   const [showContentDialog, setShowContentDialog] = useState(false);
   const [showCsvImportDialog, setShowCsvImportDialog] = useState(false);
-  const [image] = useImage(imageUrl || '');
+
+  // Generate static map URL if we have geographic bounds but no blueprint
+  const staticMapUrl = !imageUrl && geoBounds && useBaseMap
+    ? `https://maps.googleapis.com/maps/api/staticmap?center=${(geoBounds.minLat + geoBounds.maxLat) / 2},${(geoBounds.minLng + geoBounds.maxLng) / 2}&zoom=17&size=${Math.min(canvasWidth, 640)}x${Math.min(canvasHeight, 640)}&scale=2&maptype=satellite&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+    : null;
+
+  const [image] = useImage(imageUrl || staticMapUrl || '');
 
   // Manual coordinate inputs
   const [manualCoords, setManualCoords] = useState({
@@ -59,6 +65,22 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
     videos: [],
     links: [],
   });
+
+  // Track mouse position for coordinate display
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
+
+  // Track all available categories from existing zones
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+
+  // Update available categories when zones change
+  useEffect(() => {
+    const categories = Array.from(new Set(
+      zones
+        .map(zone => zone.content.category)
+        .filter((cat): cat is string => !!cat && cat.trim() !== '')
+    )).sort();
+    setAvailableCategories(categories);
+  }, [zones]);
 
   // Initialize with imported zones if provided
   useEffect(() => {
@@ -117,23 +139,57 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
     });
   };
 
+  const handleCanvasMouseMove = (e: any) => {
+    const stage = e.target.getStage();
+    const point = stage.getPointerPosition();
+
+    if (point && point.x != null && point.y != null) {
+      const x = Math.round(point.x);
+      const y = Math.round(point.y);
+
+      if (x >= 0 && x <= canvasWidth && y >= 0 && y <= canvasHeight) {
+        setMousePos({ x, y });
+      } else {
+        setMousePos(null);
+      }
+    } else {
+      setMousePos(null);
+    }
+  };
+
+  const handleCanvasMouseLeave = () => {
+    setMousePos(null);
+  };
+
   const handleCanvasClick = (e: any) => {
     if (placementMode !== 'click') return;
 
     const stage = e.target.getStage();
     const point = stage.getPointerPosition();
 
+    // Ensure we have valid coordinates
+    if (!point || point.x == null || point.y == null) return;
+
+    // Round to nearest pixel for accuracy
+    const x = Math.round(point.x);
+    const y = Math.round(point.y);
+
+    // Ensure coordinates are within canvas bounds
+    if (x < 0 || x > canvasWidth || y < 0 || y > canvasHeight) return;
+
     let coordinates: ZoneCoordinates;
 
     switch (selectedZoneType) {
       case 'point':
-        coordinates = { x: point.x, y: point.y };
+        coordinates = { x, y };
         break;
       case 'rectangle':
-        coordinates = { x: point.x, y: point.y, width: 100, height: 100 };
+        // Larger default size for better visibility
+        coordinates = { x, y, width: 150, height: 150 };
         break;
       case 'circle':
-        coordinates = { x: point.x, y: point.y, radius: 50 };
+        // Larger default radius for better visibility
+        coordinates = { x, y, radius: 75 };
         break;
       default:
         return;
@@ -207,7 +263,7 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
     setZones(zones.filter((z) => z.id !== id));
   };
 
-  const handleCsvImport = (importedZones: GeocodedZone[]) => {
+  const handleCsvImport = (importedZones: GeocodedZone[], calculatedBounds?: GeographicBounds) => {
     const newZones: Zone[] = importedZones.map(geoZone => ({
       id: geoZone.id,
       type: geoZone.type,
@@ -217,23 +273,120 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
 
     setZones(prevZones => [...prevZones, ...newZones]);
     setShowCsvImportDialog(false);
+
+    // Note: We can't update geoBounds here in zone-editor since it comes from parent
+    // If bounds were calculated, user should have imported from Canvas step instead
+    if (calculatedBounds) {
+      console.warn('[ZoneEditor] Bounds were calculated but cannot be updated from this step');
+    }
+  };
+
+  const handleZoneDragEnd = (zoneId: string, e: any) => {
+    const newX = e.target.x();
+    const newY = e.target.y();
+
+    setZones(zones.map(zone => {
+      if (zone.id !== zoneId) return zone;
+
+      let newCoordinates: ZoneCoordinates;
+      switch (zone.type) {
+        case 'point':
+          newCoordinates = { x: newX, y: newY } as PointCoordinates;
+          break;
+        case 'rectangle':
+          const rectCoords = zone.coordinates as RectangleCoordinates;
+          newCoordinates = { ...rectCoords, x: newX, y: newY } as RectangleCoordinates;
+          break;
+        case 'circle':
+          const circleCoords = zone.coordinates as CircleCoordinates;
+          newCoordinates = { ...circleCoords, x: newX, y: newY } as CircleCoordinates;
+          break;
+        default:
+          return zone;
+      }
+
+      return { ...zone, coordinates: newCoordinates };
+    }));
+  };
+
+  const handleZoneTransformEnd = (zoneId: string, node: any) => {
+    const scaleX = node.scaleX();
+    const scaleY = node.scaleY();
+
+    // Reset scale
+    node.scaleX(1);
+    node.scaleY(1);
+
+    setZones(zones.map(zone => {
+      if (zone.id !== zoneId) return zone;
+
+      let newCoordinates: ZoneCoordinates;
+      switch (zone.type) {
+        case 'rectangle':
+          const rectCoords = zone.coordinates as RectangleCoordinates;
+          newCoordinates = {
+            x: node.x(),
+            y: node.y(),
+            width: Math.max(5, rectCoords.width * scaleX),
+            height: Math.max(5, rectCoords.height * scaleY),
+          } as RectangleCoordinates;
+          break;
+        case 'circle':
+          const circleCoords = zone.coordinates as CircleCoordinates;
+          newCoordinates = {
+            x: node.x(),
+            y: node.y(),
+            radius: Math.max(5, circleCoords.radius * Math.max(scaleX, scaleY)),
+          } as CircleCoordinates;
+          break;
+        default:
+          return zone;
+      }
+
+      return { ...zone, coordinates: newCoordinates };
+    }));
   };
 
   const renderZone = (zone: Zone) => {
     const commonProps = {
-      fill: 'rgba(59, 130, 246, 0.3)',
-      stroke: 'rgb(59, 130, 246)',
-      strokeWidth: 2,
+      fill: 'rgba(239, 68, 68, 0.3)', // Bright red with transparency for better visibility
+      stroke: 'rgb(239, 68, 68)', // Solid red stroke
+      strokeWidth: 3, // Thicker stroke for better visibility
+      draggable: true,
+      onDragEnd: (e: any) => handleZoneDragEnd(zone.id, e),
+      onMouseEnter: (e: any) => {
+        const container = e.target.getStage().container();
+        container.style.cursor = 'move';
+        e.target.strokeWidth(4);
+      },
+      onMouseLeave: (e: any) => {
+        const container = e.target.getStage().container();
+        container.style.cursor = 'crosshair';
+        e.target.strokeWidth(3);
+      },
+      // Add shadow for better visibility
+      shadowColor: 'black',
+      shadowBlur: 5,
+      shadowOpacity: 0.3,
+      shadowOffset: { x: 2, y: 2 },
     };
 
     switch (zone.type) {
       case 'point':
         const pointCoords = zone.coordinates as PointCoordinates;
-        return <Circle key={zone.id} {...commonProps} x={pointCoords.x} y={pointCoords.y} radius={10} />;
+        // Larger radius for points to be more visible
+        return <Circle key={zone.id} {...commonProps} x={pointCoords.x} y={pointCoords.y} radius={15} />;
       case 'rectangle':
         const rectCoords = zone.coordinates as RectangleCoordinates;
         return (
-          <Rect key={zone.id} {...commonProps} x={rectCoords.x} y={rectCoords.y} width={rectCoords.width} height={rectCoords.height} />
+          <Rect
+            key={zone.id}
+            {...commonProps}
+            x={rectCoords.x}
+            y={rectCoords.y}
+            width={rectCoords.width}
+            height={rectCoords.height}
+          />
         );
       case 'circle':
         const circleCoords = zone.coordinates as CircleCoordinates;
@@ -244,7 +397,7 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pb-8">
       {/* Canvas */}
       <div className="lg:col-span-2">
         <Card>
@@ -253,11 +406,27 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
             <CardDescription>Click to add zones or use manual coordinates</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="relative border rounded-lg overflow-hidden bg-gray-100" style={{ maxWidth: canvasWidth, maxHeight: canvasHeight }}>
-              <Stage width={canvasWidth} height={canvasHeight} onClick={handleCanvasClick}>
+            <div
+              className="relative border rounded-lg overflow-auto bg-gray-100"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '70vh',
+                width: 'fit-content',
+                cursor: placementMode === 'click' ? 'crosshair' : 'default'
+              }}
+            >
+              <Stage
+                width={canvasWidth}
+                height={canvasHeight}
+                onClick={handleCanvasClick}
+                onMouseMove={handleCanvasMouseMove}
+                onMouseLeave={handleCanvasMouseLeave}
+              >
                 <Layer>
-                  {/* Background when no blueprint */}
-                  {!imageUrl && (
+                  {/* Background - either blueprint, static map, or gray placeholder */}
+                  {image ? (
+                    <KonvaImage image={image} width={canvasWidth} height={canvasHeight} />
+                  ) : (
                     <Rect
                       x={0}
                       y={0}
@@ -268,9 +437,6 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
                       strokeWidth={2}
                     />
                   )}
-
-                  {/* Blueprint image if provided */}
-                  {imageUrl && image && <KonvaImage image={image} width={canvasWidth} height={canvasHeight} />}
 
                   {/* User zones */}
                   {zones.map(renderZone)}
@@ -284,6 +450,16 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
                   <p className="text-gray-600">Lat: {geoBounds.minLat.toFixed(4)} to {geoBounds.maxLat.toFixed(4)}</p>
                   <p className="text-gray-600">Lng: {geoBounds.minLng.toFixed(4)} to {geoBounds.maxLng.toFixed(4)}</p>
                   <p className="text-gray-500 mt-2 text-xs italic">Click on canvas to add zones</p>
+                </div>
+              )}
+
+              {/* Coordinate display overlay */}
+              {placementMode === 'click' && mousePos && (
+                <div className="absolute bottom-4 right-4 bg-black/75 text-white px-3 py-2 rounded-lg shadow-lg text-xs font-mono">
+                  <div className="flex gap-3">
+                    <span>X: {mousePos.x}</span>
+                    <span>Y: {mousePos.y}</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -405,7 +581,14 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
                 <div key={zone.id} className="flex items-center justify-between p-2 border rounded">
                   <div>
                     <p className="font-medium text-sm">{zone.content.title}</p>
-                    <p className="text-xs text-gray-500">{zone.type}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-gray-500 capitalize">{zone.type}</span>
+                      {zone.content.category && (
+                        <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded">
+                          {zone.content.category}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <Button variant="destructive" size="sm" onClick={() => handleDeleteZone(zone.id)}>
                     Delete
@@ -419,7 +602,8 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
         <Button
           onClick={() => {
             console.log("Saving zones:", JSON.stringify(zones, null, 2));
-            onSave(zones);
+            console.log("Available categories:", availableCategories);
+            onSave(zones, availableCategories);
           }}
           className="w-full"
           size="lg"
@@ -453,6 +637,27 @@ export default function ZoneEditor({ imageUrl, canvasWidth, canvasHeight, geoBou
                 placeholder="Describe this zone..."
                 rows={3}
               />
+            </div>
+
+            {/* Category */}
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <Input
+                list="category-options"
+                value={zoneContent.category || ''}
+                onChange={(e) => setZoneContent({ ...zoneContent, category: e.target.value })}
+                placeholder="e.g., Parking, Building, Amenity, Dining"
+              />
+              <datalist id="category-options">
+                {availableCategories.map((category) => (
+                  <option key={category} value={category} />
+                ))}
+              </datalist>
+              <p className="text-xs text-muted-foreground">
+                {availableCategories.length > 0
+                  ? `Select from existing categories or type a new one. ${availableCategories.length} categories available.`
+                  : 'Categories allow users to filter zones on the map. Type to create your first category.'}
+              </p>
             </div>
 
             {/* Image Upload */}

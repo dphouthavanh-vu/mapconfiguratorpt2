@@ -1,4 +1,5 @@
 import { ZoneContent, ZoneCoordinates, ZoneType } from './types';
+import { geoToPixel } from './coordinate-converter';
 
 export interface CSVRow {
   [key: string]: string;
@@ -193,7 +194,7 @@ export function csvToZones(data: CSVRow[], mappings: CSVImportOptions): Imported
 }
 
 /**
- * Convert geographic coordinates to canvas coordinates
+ * Convert geographic coordinates to canvas coordinates using Web Mercator projection
  */
 export function geoToCanvasCoordinates(
   lat: number,
@@ -202,18 +203,8 @@ export function geoToCanvasCoordinates(
   canvasWidth: number,
   canvasHeight: number
 ): { x: number; y: number } {
-  const latRange = geoBounds.maxLat - geoBounds.minLat;
-  const lngRange = geoBounds.maxLng - geoBounds.minLng;
-
-  // Normalize to 0-1 range
-  const normalizedLng = (lng - geoBounds.minLng) / lngRange;
-  const normalizedLat = 1 - (lat - geoBounds.minLat) / latRange; // Invert Y axis
-
-  // Convert to canvas coordinates
-  const x = normalizedLng * canvasWidth;
-  const y = normalizedLat * canvasHeight;
-
-  return { x, y };
+  // Use the proper Web Mercator projection from coordinate-converter
+  return geoToPixel(lat, lng, canvasWidth, canvasHeight, geoBounds);
 }
 
 /**
